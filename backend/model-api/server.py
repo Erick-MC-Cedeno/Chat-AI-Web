@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # <-- Importación añadida
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -96,6 +97,7 @@ def generate_response(user_text):
 
 # -------------------- FLASK --------------------
 app = Flask(__name__)
+CORS(app, origins=["https://solid-spork-v9g6vrvgqr9fpp54-3000.app.github.dev"])  # <-- CORS habilitado
 
 @app.route("/chat", methods=["POST"])
 def chat():

@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Brain } from "lucide-react"
 import { MobileSidebarToggle } from "./mobile-sidebar-toggle"
+import { ConnectionStatus } from "./connection-status"
 import type { Conversation } from "@/types/chat"
 
 interface ChatHeaderProps {
@@ -46,12 +47,9 @@ export function ChatHeader({
         </div>
 
         <p className="text-muted-foreground">Asistente con IA para programación, matemáticas y más</p>
-        <div className="flex items-center justify-center gap-2 mt-2">
-          <div className={`w-2 h-2 rounded-full ${connectionError ? "bg-red-500" : "bg-green-500"}`} />
-          <span className="text-xs text-muted-foreground">
-            {connectionError ? "Desconectado" : "Conectado a /api/model"}
-          </span>
-        </div>
+
+        {/* Componente de estado de conexión mejorado */}
+        <ConnectionStatus connectionError={connectionError} />
       </CardHeader>
     </Card>
   )
