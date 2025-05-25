@@ -1,0 +1,138 @@
+{
+  "conversations": [
+    {
+      "prompt": "Hola",
+      "completion": "Hola, como estas?",
+      "intent": "saludos",
+      "pattern": ["hola", "buenas", "saludos", "que tal", "como estas"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": []
+    },
+    {
+      "prompt": "Muy bien gracias",
+      "completion": "Perfecto en que te puedo ayudar?",
+      "intent": "saludos",
+      "pattern": ["muy bien", "gracias", "muchas gracias"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": []
+    },
+    {
+      "prompt": "Gracias",
+      "completion": "De nada algo mas en lo que pueda ayudarte?",
+      "intent": "saludos",
+      "pattern": ["gracias", "muchas gracias", "muy bien"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": []
+    },
+    {
+      "prompt": "Hola, que tal?",
+      "completion": "Todo bien, gracias. Y tu?",
+      "intent": "saludos",
+      "pattern": ["hola", "que tal", "como estas", "buenas tardes", "buenas noches"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": ["Usuario: Hola, que tal?\nBot: Todo bien, gracias. Y tu?"]
+    },
+    {
+      "prompt": "Buenos dias",
+      "completion": "Buenos dias, como te puedo ayudar hoy?",
+      "intent": "saludos",
+      "pattern": ["buenos dias", "buenas tardes", "buenas noches", "saludos", "hola"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": ["Usuario: Buenos dias\nBot: Buenos dias, como te puedo ayudar hoy?"]
+    },
+    {
+      "prompt": "Buenas tardes",
+      "completion": "Buenas tardes, en que puedo ayudarte?",
+      "intent": "saludos",
+      "pattern": ["buenas tardes", "buenos dias", "buenas noches", "saludos", "hola"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": ["Usuario: Buenas tardes\nBot: Buenas tardes, en que puedo ayudarte?"]
+    },
+    {
+      "prompt": "Buenas noches",
+      "completion": "Buenas noches, en que puedo ayudarte?",
+      "intent": "saludos",
+      "pattern": ["buenas noches", "buenos dias", "buenas tardes", "saludos", "hola"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": ["Usuario: Buenas noches\nBot: Buenas noches, en que puedo ayudarte?"]
+    },
+    {
+      "prompt": "Como te llamas?",
+      "completion": "Soy un asistente virtual creado para ayudarte. No tengo un nombre propio.",
+      "intent": "saludos",
+      "pattern": ["como te llamas", "como te llama", "que es tu nombre", "que es tu nombre", "cual es tu nombre"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": ["Usuario: Como te llamas?\nBot: Soy un asistente virtual creado para ayudarte. No tengo un nombre propio."]
+    },
+    {
+      "prompt": "Que puedes hacer?",
+      "completion": "Puedo responder preguntas, dar informacion y ayudarte con tareas relacionadas con Linux y seguridad informatica.",
+      "intent": "saludos",
+      "pattern": ["que puedes hacer", "que puedes hacer", "puedo ayudarte", "como puedo ayudarte", "que puedo hacer"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": ["Usuario: Que puedes hacer?\nBot: Puedo responder preguntas, dar informacion y ayudarte con tareas relacionadas con Linux y seguridad informatica."]
+    },
+    {
+      "prompt": "Como estas",
+      "completion": "Estoy bien, gracias. Y tu?",
+      "intent": "saludos",
+      "pattern": ["como estas", "que tal", "como estas", "que tal", "estoy bien"],
+      "task": "saludo",
+      "meaning": "inicio de conversacion amigable",
+      "examples": ["Usuario: Como estas\nBot: Estoy bien, gracias. Y tu?"]
+    },
+    {
+      "prompt": "Como depuro un error de sintaxis en Python?",
+      "completion": "Revisa el mensaje de error, identifica la linea problematica y corrige la sintaxis. Utiliza un IDE que resalte los errores.",
+      "intent": "programacion",
+      "pattern": ["error de sintaxis", "depurar python", "python error", "corregir sintaxis"],
+      "task": "resolver problema",
+      "meaning": "consejos para depurar errores en Python",
+      "examples": [
+        "Usuario: Como depuro un error de sintaxis en Python?\nBot: Revisa el mensaje de error, identifica la linea problematica y corrige la sintaxis. Ejemplo:\n\nCódigo:\nprint('Hola mundo'\n\nError:\nSyntaxError: unexpected EOF while parsing\n\nCorrección:\nprint('Hola mundo')"
+      ]
+    },
+    {
+      "prompt": "Como instalo un paquete en Python?",
+      "completion": "Puedes instalar paquetes con pip. Ejecuta 'pip install nombre_del_paquete' en tu terminal o linea de comandos.",
+      "intent": "programacion",
+      "pattern": ["instalar paquete python", "pip install", "agregar libreria python", "descargar paquete"],
+      "task": "instruir",
+      "meaning": "explicacion sobre instalacion de paquetes en Python",
+      "examples": [
+        "Usuario: Como instalo un paquete en Python?\nBot: Puedes instalar paquetes con pip. Ejemplo:\n\nComando:\npip install requests\n\nEsto instalará la librería 'requests' para realizar solicitudes HTTP."
+      ]
+    },
+    {
+      "prompt": "Como creo una funcion en Python?",
+      "completion": "Para crear una funcion en Python, usa la palabra clave 'def', seguida del nombre de la funcion y parentesis.",
+      "intent": "programacion",
+      "pattern": ["crear funcion python", "definir funcion", "funcion en python", "como usar def", "ejemplo de funcion"],
+      "task": "instruir",
+      "meaning": "explicacion sobre como definir funciones en Python",
+      "examples": [
+        "Usuario: Como creo una funcion en Python?\nBot: Para crear una funcion en Python, usa la palabra clave 'def'. Ejemplo:\n\nCódigo:\ndef saludar():\n    print('Hola mundo')\n\nLlamada:\nsaludar()"
+      ]
+    },
+    {
+      "prompt": "Como uso un bucle for en Python?",
+      "completion": "Un bucle 'for' en Python se usa para iterar sobre una secuencia (como una lista o rango).",
+      "intent": "programacion",
+      "pattern": ["usar bucle for", "for loop python", "iterar en python", "ejemplo de bucle", "como usar for"],
+      "task": "instruir",
+      "meaning": "explicacion sobre como usar bucles for en Python",
+      "examples": [
+        "Usuario: Como uso un bucle for en Python?\nBot: Un bucle 'for' se usa para iterar sobre elementos. Ejemplo:\n\nCódigo:\nfrutas = ['manzana', 'banana', 'cereza']\nfor fruta in frutas:\n    print(fruta)\n\nSalida:\nmanzana\nbanana\ncereza"
+      ]
+    }
+  ]
+}
