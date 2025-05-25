@@ -13,22 +13,47 @@ export function useChat() {
     connectionError: null,
   })
 
+  // Verificar conexión con la API al montar el hook
+  useEffect(() => {
+    let isMounted = true
+    setConnectionError(null)
+    ChatbotAPIService.checkConnection()
+      .then((result) => {
+        if (isMounted && !result.connected) {
+          setConnectionError("No se pudo conectar con la API Flask")
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setConnectionError(
+            typeof err === "string" ? err : err?.message || "Error desconocido al verificar conexión"
+          )
+        }
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   // Cargar conversaciones al inicializar
   useEffect(() => {
     const conversations = ConversationStorage.loadConversations()
     const currentId = ConversationStorage.loadCurrentConversationId()
 
     if (conversations.length === 0) {
-      // Crear primera conversación si no hay ninguna
-      const newConversation = ConversationStorage.createNewConversation()
+      const newConversation = {
+        id: Date.now().toString(),
+        title: "Nueva conversación",
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
       setState({
         conversations: [newConversation],
         currentConversationId: newConversation.id,
         isLoading: false,
         connectionError: null,
       })
-      ConversationStorage.saveConversations([newConversation])
-      ConversationStorage.saveCurrentConversationId(newConversation.id)
     } else {
       setState({
         conversations,
@@ -46,9 +71,11 @@ export function useChat() {
     }
   }, [state.conversations])
 
-  // Guardar conversación actual cuando cambie
+  // Guardar ID de conversación actual cuando cambie
   useEffect(() => {
-    ConversationStorage.saveCurrentConversationId(state.currentConversationId)
+    if (state.currentConversationId) {
+      ConversationStorage.saveCurrentConversationId(state.currentConversationId)
+    }
   }, [state.currentConversationId])
 
   const getCurrentConversation = useCallback((): Conversation | null => {
@@ -56,21 +83,32 @@ export function useChat() {
   }, [state.conversations, state.currentConversationId])
 
   const updateCurrentConversation = useCallback((updates: Partial<Conversation>) => {
-    setState((prev) => ({
-      ...prev,
-      conversations: prev.conversations.map((conv) =>
-        conv.id === prev.currentConversationId ? { ...conv, ...updates, updatedAt: new Date() } : conv,
-      ),
-    }))
+    setState((prev) => {
+      const updatedConversations = prev.conversations.map((conv) =>
+        conv.id === prev.currentConversationId
+          ? { ...conv, ...updates, updatedAt: new Date() }
+          : conv
+      )
+      
+      return {
+        ...prev,
+        conversations: updatedConversations,
+      }
+    })
   }, [])
 
   const addMessage = useCallback(
     (message: Message) => {
       const currentConv = getCurrentConversation()
-      if (!currentConv) return
+      if (!currentConv) {
+        return
+      }
 
       const updatedMessages = [...currentConv.messages, message]
-      updateCurrentConversation({ messages: updatedMessages })
+      updateCurrentConversation({ 
+        messages: updatedMessages,
+        updatedAt: new Date()
+      })
     },
     [getCurrentConversation, updateCurrentConversation],
   )
@@ -149,80 +187,81 @@ export function useChat() {
 
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!content.trim() || state.isLoading) return
+      if (!content.trim() || state.isLoading) {
+        return
+      }
 
       const currentConv = getCurrentConversation()
-      if (!currentConv) return
+      if (!currentConv) {
+        return
+      }
 
       // Agregar mensaje del usuario
       const userMessage: Message = {
         id: Date.now().toString(),
-        content,
+        content: content.trim(),
         sender: "user",
         timestamp: new Date(),
       }
-      addMessage(userMessage)
-
-      // Actualizar título si es el primer mensaje del usuario
-      if (currentConv.messages.length === 1) {
-        const newTitle = ConversationStorage.generateConversationTitle([...currentConv.messages, userMessage])
-        updateConversationTitle(currentConv.id, newTitle)
+      
+      // Crear mensaje del bot con estado de carga
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "",
+        sender: "bot",
+        timestamp: new Date(),
+        isTyping: true,
       }
+
+      // Agregar ambos mensajes a la conversación
+      const updatedMessages = [...currentConv.messages, userMessage, botMessage]
+      updateCurrentConversation({ 
+        messages: updatedMessages,
+        title: currentConv.messages.length === 0 ? content : currentConv.title
+      })
 
       setLoading(true)
       setConnectionError(null)
 
       try {
-        // Crear mensaje del bot con estado de carga
-        const botMessageId = (Date.now() + 1).toString()
-        const botMessage: Message = {
-          id: botMessageId,
-          content: "",
-          sender: "bot",
-          timestamp: new Date(),
-          isTyping: true,
-        }
-        addMessage(botMessage)
-
-        // Llamar a la API
         const response = await ChatbotAPIService.sendMessage(content)
 
-        // Simular efecto de escritura
-        await simulateTyping(response, botMessageId)
-      } catch (error) {
-        console.error("Error calling model API:", error)
+        let finalResponse = response
 
+        if (typeof response !== "string" || !response.trim()) {
+          finalResponse = "Lo siento, no pude procesar tu solicitud. Por favor, intenta nuevamente."
+        }
+
+        // Actualizar el mensaje del bot con la respuesta
+        const finalMessages = updatedMessages.map(msg => 
+          msg.id === botMessage.id 
+            ? { ...msg, content: finalResponse, isTyping: false }
+            : msg
+        )
+
+        updateCurrentConversation({ messages: finalMessages })
+      } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Error desconocido"
         setConnectionError(`Error de conexión: ${errorMessage}`)
 
         // Actualizar el mensaje del bot con error
-        const currentConvAfterError = getCurrentConversation()
-        if (currentConvAfterError) {
-          const updatedMessages = currentConvAfterError.messages.map((msg) =>
-            msg.sender === "bot" && msg.isTyping
-              ? {
-                  ...msg,
-                  content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.",
-                  isTyping: false,
-                  error: true,
-                }
-              : msg,
-          )
-          updateCurrentConversation({ messages: updatedMessages })
-        }
+        const errorMessages = updatedMessages.map(msg =>
+          msg.id === botMessage.id
+            ? {
+                ...msg,
+                content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.",
+                isTyping: false,
+                error: true,
+              }
+            : msg
+        )
+
+        updateCurrentConversation({ messages: errorMessages })
       } finally {
         setLoading(false)
       }
     },
-    [
-      state.isLoading,
-      getCurrentConversation,
-      addMessage,
-      updateConversationTitle,
-      setLoading,
-      setConnectionError,
-      updateCurrentConversation,
-    ],
+    [state.isLoading, getCurrentConversation, updateCurrentConversation, setLoading, setConnectionError],
   )
 
   const simulateTyping = useCallback(

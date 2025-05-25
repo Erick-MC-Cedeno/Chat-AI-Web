@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Llamar directamente a la API Flask en GitHub Codespaces
-    const flaskResponse = await fetch("https://solid-spork-v9g6vrvgqr9fpp54-8000.app.github.dev/chat", {
+    const flaskResponse = await fetch("https://fictional-space-waddle-9rq7959q47v2954q-8000.app.github.dev/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 // Endpoint adicional para verificar el estado de la conexión con Flask
 export async function GET() {
   try {
-    const flaskResponse = await fetch("https://solid-spork-v9g6vrvgqr9fpp54-8000.app.github.dev/chat", {
+    const flaskResponse = await fetch("https://fictional-space-waddle-9rq7959q47v2954q-8000.app.github.dev/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

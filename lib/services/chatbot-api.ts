@@ -1,10 +1,9 @@
 export class ChatbotAPIService {
   // Configuración de la API Flask en GitHub Codespaces
-  private static readonly FLASK_API_URL = "https://solid-spork-v9g6vrvgqr9fpp54-8000.app.github.dev"
+  private static readonly FLASK_API_URL = "https://fictional-space-waddle-9rq7959q47v2954q-8000.app.github.dev"
   private static readonly CHAT_ENDPOINT = "/chat"
 
   static async sendMessage(prompt: string): Promise<string> {
-    console.log("[ChatbotAPIService] Enviando mensaje:", prompt)
 
     try {
       const response = await fetch(`${this.FLASK_API_URL}${this.CHAT_ENDPOINT}`, {
@@ -16,25 +15,18 @@ export class ChatbotAPIService {
         body: JSON.stringify({ message: prompt }),
       })
 
-      console.log("[ChatbotAPIService] Código de respuesta HTTP:", response.status)
-
       if (!response.ok) {
-        console.warn("[ChatbotAPIService] Respuesta no OK:", response.statusText)
         throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`)
       }
 
       const data = await response.json()
-      console.log("[ChatbotAPIService] Respuesta recibida:", data)
-
       if (data.response) {
         return data.response
       } else {
-        console.error("[ChatbotAPIService] Formato inválido de respuesta:", data)
         throw new Error("Respuesta inválida del servidor Flask")
       }
     } catch (error) {
       if (error instanceof TypeError && error.message.includes("fetch")) {
-        console.error("[ChatbotAPIService] Error de red o fetch:", error.message)
         throw new Error(
           "No se pudo conectar con el servidor Flask. Verifica que esté ejecutándose en GitHub Codespaces",
         )
@@ -48,7 +40,6 @@ export class ChatbotAPIService {
   }
 
   static async healthCheck(): Promise<boolean> {
-    console.log("[ChatbotAPIService] Ejecutando healthCheck()")
     try {
       const response = await fetch(`${this.FLASK_API_URL}${this.CHAT_ENDPOINT}`, {
         method: "POST",
@@ -58,7 +49,6 @@ export class ChatbotAPIService {
         },
         body: JSON.stringify({ message: "test" }),
       })
-      console.log("[ChatbotAPIService] Código de respuesta healthCheck:", response.status)
       return response.ok
     } catch (err) {
       console.error("[ChatbotAPIService] Error en healthCheck:", err)
@@ -67,7 +57,6 @@ export class ChatbotAPIService {
   }
 
   static async checkConnection(): Promise<{ connected: boolean; message: string }> {
-    console.log("[ChatbotAPIService] Ejecutando checkConnection()")
     try {
       const response = await fetch(`${this.FLASK_API_URL}${this.CHAT_ENDPOINT}`, {
         method: "POST",
@@ -81,7 +70,6 @@ export class ChatbotAPIService {
       if (response.ok) {
         const data = await response.json()
         const msg = `Conectado a GitHub Codespaces - Respuesta: ${data.response?.substring(0, 50)}...`
-        console.log("[ChatbotAPIService] Conexión exitosa:", msg)
         return {
           connected: true,
           message: msg,

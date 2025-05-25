@@ -4,7 +4,7 @@
 
 La aplicación está configurada para conectarse con tu API Flask en GitHub Codespaces:
 
-**URL de la API Flask:** `https://solid-spork-v9g6vrvgqr9fpp54-8000.app.github.dev`
+**URL de la API Flask:** `https://fictional-space-waddle-9rq7959q47v2954q-8000.app.github.dev`
 
 ## 📋 Pasos para verificar la conexión
 
@@ -17,11 +17,11 @@ python app.py
 ### 2. Verificar que el puerto esté expuesto
 - Ve a la pestaña "PORTS" en VS Code
 - Asegúrate de que el puerto 8000 esté listado y sea público
-- La URL debería ser: `https://solid-spork-v9g6vrvgqr9fpp54-8000.app.github.dev`
+- La URL debería ser: `https://fictional-space-waddle-9rq7959q47v2954q-8000.app.github.dev`
 
 ### 3. Probar la API directamente
 \`\`\`bash
-curl -X POST https://solid-spork-v9g6vrvgqr9fpp54-8000.app.github.dev/chat \
+curl -X POST https://fictional-space-waddle-9rq7959q47v2954q-8000.app.github.dev/chat 
   -H "Content-Type: application/json" \
   -d '{"message": "Hola"}'
 \`\`\`
@@ -31,7 +31,7 @@ Tu archivo Flask debería tener:
 \`\`\`python
 from flask_cors import CORS
 app = Flask(__name__)
-CORS(app, origins=["https://solid-spork-v9g6vrvgqr9fpp54-3000.app.github.dev"])
+CORS(app, origins=["https://fictional-space-waddle-9rq7959q47v2954q-8000.app.github.dev"])
 \`\`\`
 
 ## 🔧 Solución de problemas
