@@ -28,13 +28,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       >
         <p className="text-sm leading-relaxed">
           {message.content}
-          {message.isTyping && (
-            <span className="inline-flex items-center ml-1">
-              <span className="w-1 h-1 bg-current rounded-full animate-pulse mr-1" />
-              <span className="w-1 h-1 bg-current rounded-full animate-pulse mr-1" style={{ animationDelay: "0.2s" }} />
-              <span className="w-1 h-1 bg-current rounded-full animate-pulse" style={{ animationDelay: "0.4s" }} />
-            </span>
-          )}
         </p>
         <p
           className={`text-xs mt-1 ${

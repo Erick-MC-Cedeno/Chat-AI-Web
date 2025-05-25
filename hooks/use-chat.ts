@@ -209,8 +209,7 @@ export function useChat() {
         id: (Date.now() + 1).toString(),
         content: "",
         sender: "bot",
-        timestamp: new Date(),
-        isTyping: true,
+        timestamp: new Date()
       }
 
       // Agregar ambos mensajes a la conversación
@@ -250,7 +249,6 @@ export function useChat() {
             ? {
                 ...msg,
                 content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.",
-                isTyping: false,
                 error: true,
               }
             : msg
@@ -262,28 +260,6 @@ export function useChat() {
       }
     },
     [state.isLoading, getCurrentConversation, updateCurrentConversation, setLoading, setConnectionError],
-  )
-
-  const simulateTyping = useCallback(
-    async (text: string, messageId: string): Promise<void> => {
-      return new Promise((resolve) => {
-        let currentText = ""
-        let index = 0
-
-        const typingInterval = setInterval(() => {
-          if (index < text.length) {
-            currentText += text[index]
-            updateMessage(messageId, { content: currentText })
-            index++
-          } else {
-            clearInterval(typingInterval)
-            updateMessage(messageId, { isTyping: false })
-            resolve()
-          }
-        }, 30)
-      })
-    },
-    [updateMessage],
   )
 
   const currentConversation = getCurrentConversation()
