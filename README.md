@@ -15,17 +15,17 @@ Una aplicación web moderna de chat impulsada por inteligencia artificial, const
 ## Tecnologías Utilizadas 🛠️
 
 ### Frontend
-- [Next.js 14](https://nextjs.org/) - Framework de React para producción
-- [TypeScript](https://www.typescriptlang.org/) - JavaScript con tipos
-- [Tailwind CSS](https://tailwindcss.com/) - Framework CSS utility-first
-- [Shadcn/ui](https://ui.shadcn.com/) - Componentes de UI reutilizables
-- [Radix UI](https://www.radix-ui.com/) - Primitivos de UI accesibles
-- [React Hook Form](https://react-hook-form.com/) - Manejo de formularios
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Radix UI](https://img.shields.io/badge/Radix_UI-161618?style=for-the-badge&logo=radix-ui&logoColor=white)
 
 ### Backend
-- [Python](https://www.python.org/) - Lenguaje de backend
-- [Keras](https://keras.io/) - Biblioteca de aprendizaje profundo
-- [Flask](https://flask.palletsprojects.com/) - Framework web para Python
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Keras](https://img.shields.io/badge/Keras-D00000?style=for-the-badge&logo=keras&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
+
 
 ## Estructura del Proyecto 📁
 
