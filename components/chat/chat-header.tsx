@@ -43,7 +43,7 @@ export function ChatHeader({
               Chatbot Inteligente
             </CardTitle>
           </div>
-          <div className="w-10" /> {/* Spacer for mobile */}
+          <div className="w-10" /> 
         </div>
 
         <p className="text-muted-foreground">Asistente con IA para programación, matemáticas y más</p>

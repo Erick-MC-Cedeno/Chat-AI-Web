@@ -24,10 +24,10 @@ export function ConnectionStatus({ connectionError }: ConnectionStatusProps) {
   }
 
   useEffect(() => {
-    // Verificar conexión al cargar
+    
     checkConnection()
 
-    // Verificar cada 30 segundos
+  
     const interval = setInterval(checkConnection, 30000)
 
     return () => clearInterval(interval)
