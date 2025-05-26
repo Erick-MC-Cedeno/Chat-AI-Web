@@ -133,6 +133,160 @@
       "examples": [
         "Usuario: Como uso un bucle for en Python?\nBot: Un bucle 'for' se usa para iterar sobre elementos. Ejemplo:\n\nCódigo:\nfrutas = ['manzana', 'banana', 'cereza']\nfor fruta in frutas:\n    print(fruta)\n\nSalida:\nmanzana\nbanana\ncereza"
       ]
+    },
+    {
+      "prompt": "Que es SQL Injection?",
+      "completion": "SQL Injection es un ataque donde el atacante inserta código SQL malicioso en las entradas de una aplicación para manipular la base de datos. Para prevenirlo, usa consultas parametrizadas y valida todas las entradas de usuario.",
+      "intent": "ciberseguridad",
+      "pattern": ["sql injection", "inyeccion sql", "ataque sql", "vulnerabilidad sql"],
+      "task": "instruir",
+      "meaning": "explicación sobre el ataque SQL Injection y cómo prevenirlo",
+      "examples": [
+        "Usuario: Que es SQL Injection?\nBot: SQL Injection es un ataque que aprovecha entradas no validadas. Ejemplo de ataque:\n\nVulnerable:\nSELECT * FROM usuarios WHERE usuario = '$input'\n\nAtaque:\n$input = \"admin' OR '1'='1\"\n\nPrevención:\nUsar consultas parametrizadas:\nSELECT * FROM usuarios WHERE usuario = ?"
+      ]
+    },
+    {
+      "prompt": "Que son las variables en programacion?",
+      "completion": "Las variables son espacios en memoria que almacenan datos. Pueden contener números, texto, booleanos u otros tipos de datos y su valor puede cambiar durante la ejecución del programa.",
+      "intent": "programacion",
+      "pattern": ["que son variables", "variables programacion", "como usar variables", "declarar variables"],
+      "task": "instruir",
+      "meaning": "explicación sobre el concepto de variables en programación",
+      "examples": [
+        "Usuario: Que son las variables en programacion?\nBot: Las variables almacenan datos que podemos usar después. Ejemplo:\n\nPython:\nnombre = 'Juan'  # Variable tipo texto\nedad = 25      # Variable tipo número\nactivo = True   # Variable tipo booleano\n\nprint(f'{nombre} tiene {edad} años')"
+      ]
+    },
+    {
+      "prompt": "Como funciona un ataque de fuerza bruta?",
+      "completion": "Un ataque de fuerza bruta intenta descifrar contraseñas probando todas las combinaciones posibles. Es importante usar contraseñas fuertes y mecanismos como limitación de intentos para prevenirlo.",
+      "intent": "ciberseguridad",
+      "pattern": ["fuerza bruta", "ataque contraseñas", "descifrar password", "crackear contraseña"],
+      "task": "instruir",
+      "meaning": "explicación sobre ataques de fuerza bruta y su prevención",
+      "examples": [
+        "Usuario: Como funciona un ataque de fuerza bruta?\nBot: Un ataque de fuerza bruta prueba sistemáticamente contraseñas. Ejemplo:\n\nContraseña débil: 'abc123'\nTiempo para crackear: segundos\n\nContraseña fuerte: 'P@ssw0rd!2023'\nTiempo para crackear: años\n\nPrevención:\n- Usar contraseñas largas y complejas\n- Implementar bloqueo después de varios intentos\n- Usar autenticación de dos factores"
+      ]
+    },
+    {
+      "prompt": "Cuentame un chiste de programadores",
+      "completion": "¿Por qué los programadores prefieren el frío? Porque odian los bugs. 🐛❄️",
+      "intent": "humor",
+      "pattern": ["chiste programacion", "broma programador", "chiste informatico", "humor codigo"],
+      "task": "entretener",
+      "meaning": "compartir humor relacionado con la programación",
+      "examples": [
+        "Usuario: Cuentame un chiste de programadores\nBot: ¿Por qué los programadores prefieren el frío? Porque odian los bugs. 🐛❄️"
+      ]
+    },
+    {
+      "prompt": "Que es una estructura de control?",
+      "completion": "Las estructuras de control son instrucciones que permiten modificar el flujo de ejecución de un programa. Las principales son: condicionales (if-else), bucles (for, while) y control de excepciones (try-catch).",
+      "intent": "programacion",
+      "pattern": ["estructura control", "if else", "bucles", "control flujo", "condicionales"],
+      "task": "instruir",
+      "meaning": "explicación sobre estructuras de control en programación",
+      "examples": [
+        "Usuario: Que es una estructura de control?\nBot: Las estructuras de control determinan el flujo del programa. Ejemplo:\n\nif edad >= 18:\n    print('Eres mayor de edad')\nelse:\n    print('Eres menor de edad')\n\nwhile contador > 0:\n    print(contador)\n    contador -= 1"
+      ]
+    },
+    {
+      "prompt": "Como me proteges de un ransomware?",
+      "completion": "Para protegerte del ransomware: 1) Mantén backups regulares, 2) No abras archivos sospechosos, 3) Mantén el software actualizado, 4) Usa antivirus, 5) Ten cuidado con los correos electrónicos.",
+      "intent": "ciberseguridad",
+      "pattern": ["proteger ransomware", "evitar secuestro datos", "prevenir ransomware", "malware rescate"],
+      "task": "instruir",
+      "meaning": "consejos para protección contra ransomware",
+      "examples": [
+        "Usuario: Como me proteges de un ransomware?\nBot: Para protegerte del ransomware sigue estos pasos:\n\n1. Backups regulares offline\n2. No abrir archivos adjuntos sospechosos\n3. Mantener Windows/antivirus actualizado\n4. Usar software legítimo\n5. Verificar remitentes de correos\n\nEjemplo de correo sospechoso:\n'Has ganado un premio! Abre el archivo adjunto.exe'"
+      ]
+    },
+    {
+      "prompt": "Me siento triste",
+      "completion": "Lamento escuchar eso. Recuerda que todos tenemos días difíciles, pero siempre hay luz al final del túnel. ¿Quieres que te cuente un chiste para animarte?",
+      "intent": "emocional",
+      "pattern": ["estoy triste", "me siento mal", "deprimido", "animo bajo"],
+      "task": "animar",
+      "meaning": "dar apoyo emocional y tratar de animar",
+      "examples": [
+        "Usuario: Me siento triste\nBot: Lamento escuchar eso. ¿Te cuento un chiste? ¿Por qué el programador fue al médico? ¡Porque tenía un virus! 😄"
+      ]
+    },
+    {
+      "prompt": "Que es el algoritmo Bubble Sort?",
+      "completion": "Bubble Sort es un algoritmo de ordenamiento simple que compara pares de elementos adyacentes y los intercambia si están en el orden incorrecto. Es fácil de entender pero no muy eficiente, con complejidad O(n²).",
+      "intent": "programacion",
+      "pattern": ["bubble sort", "ordenamiento burbuja", "algoritmo ordenamiento", "como ordenar lista"],
+      "task": "instruir",
+      "meaning": "explicación del algoritmo de ordenamiento burbuja con ejemplo",
+      "examples": [
+        "Usuario: Que es el algoritmo Bubble Sort?\nBot: Bubble Sort compara elementos adyacentes y los intercambia. Ejemplo en Python:\n\ndef bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n\n# Ejemplo de uso:\nnumeros = [64, 34, 25, 12, 22, 11, 90]\nbubble_sort(numeros)\nprint('Lista ordenada:', numeros)\n# Salida: [11, 12, 22, 25, 34, 64, 90]"
+      ]
+    },
+    {
+      "prompt": "Como implemento una lista enlazada?",
+      "completion": "Una lista enlazada es una estructura de datos donde cada elemento (nodo) contiene un valor y una referencia al siguiente nodo. Se usa cuando necesitas inserción/eliminación eficiente de elementos.",
+      "intent": "programacion",
+      "pattern": ["lista enlazada", "linked list", "nodos enlazados", "implementar lista"],
+      "task": "instruir",
+      "meaning": "explicación de implementación de lista enlazada con ejemplo",
+      "examples": [
+        "Usuario: Como implemento una lista enlazada?\nBot: Una lista enlazada se implementa con nodos. Ejemplo en Python:\n\nclass Nodo:\n    def __init__(self, dato):\n        self.dato = dato\n        self.siguiente = None\n\nclass ListaEnlazada:\n    def __init__(self):\n        self.cabeza = None\n\n    def agregar(self, dato):\n        nuevo_nodo = Nodo(dato)\n        if not self.cabeza:\n            self.cabeza = nuevo_nodo\n            return\n        actual = self.cabeza\n        while actual.siguiente:\n            actual = actual.siguiente\n        actual.siguiente = nuevo_nodo\n\n# Ejemplo de uso:\nlista = ListaEnlazada()\nlista.agregar(1)\nlista.agregar(2)\nlista.agregar(3)"
+      ]
+    },
+    {
+      "prompt": "Explícame que es XSS (Cross-Site Scripting)",
+      "completion": "XSS es un ataque donde se inyecta código malicioso (usualmente JavaScript) en páginas web vistas por otros usuarios. Puede robar cookies de sesión, modificar contenido o redireccionar a sitios maliciosos.",
+      "intent": "ciberseguridad",
+      "pattern": ["xss", "cross site scripting", "inyeccion javascript", "seguridad web"],
+      "task": "instruir",
+      "meaning": "explicación sobre ataques XSS y su prevención",
+      "examples": [
+        "Usuario: Explícame que es XSS\nBot: XSS permite inyectar scripts maliciosos. Ejemplo:\n\nVulnerable:\n<input value='<?php echo $_GET['nombre']; ?>'>\n\nAtaque:\n?nombre=<script>alert('XSS')</script>\n\nPrevención:\n1. Escapar caracteres especiales\n2. Usar Content Security Policy (CSP)\n3. Validar y sanitizar entradas\n4. Ejemplo seguro:\nhtmlspecialchars($_GET['nombre'], ENT_QUOTES, 'UTF-8');"
+      ]
+    },
+    {
+      "prompt": "Que es la recursividad en programación?",
+      "completion": "La recursividad es cuando una función se llama a sí misma para resolver un problema dividiéndolo en casos más pequeños. Es útil para problemas que tienen una estructura recursiva natural.",
+      "intent": "programacion",
+      "pattern": ["recursividad", "funcion recursiva", "recursion", "llamada recursiva"],
+      "task": "instruir",
+      "meaning": "explicación de recursividad con ejemplo práctico",
+      "examples": [
+        "Usuario: Que es la recursividad en programación?\nBot: La recursividad es cuando una función se llama a sí misma. Ejemplo del factorial:\n\ndef factorial(n):\n    # Caso base\n    if n == 0 or n == 1:\n        return 1\n    # Caso recursivo\n    return n * factorial(n-1)\n\n# Ejemplo de uso:\nprint(factorial(5))  # 5 * 4 * 3 * 2 * 1 = 120\n\n# La función se llama a sí misma con n-1 hasta llegar al caso base"
+      ]
+    },
+    {
+      "prompt": "Como funciona el cifrado César?",
+      "completion": "El cifrado César es un método simple de cifrado por sustitución que desplaza cada letra del alfabeto un número fijo de posiciones. Es un ejemplo básico de criptografía.",
+      "intent": "ciberseguridad",
+      "pattern": ["cifrado cesar", "caesar cipher", "criptografia basica", "desplazamiento letras"],
+      "task": "instruir",
+      "meaning": "explicación del cifrado César con implementación",
+      "examples": [
+        "Usuario: Como funciona el cifrado César?\nBot: El cifrado César desplaza cada letra N posiciones. Ejemplo en Python:\n\ndef cifrado_cesar(texto, desplazamiento):\n    resultado = ''\n    for letra in texto:\n        if letra.isalpha():\n            # Determinar el código ASCII base (65 para mayúsculas, 97 para minúsculas)\n            ascii_base = 65 if letra.isupper() else 97\n            # Aplicar el desplazamiento y mantener en el rango del alfabeto\n            nuevo_ascii = (ord(letra) - ascii_base + desplazamiento) % 26 + ascii_base\n            resultado += chr(nuevo_ascii)\n        else:\n            resultado += letra\n    return resultado\n\n# Ejemplo:\ntexto = 'HOLA MUNDO'\nencriptado = cifrado_cesar(texto, 3)\nprint(f'Original: {texto}')\nprint(f'Cifrado: {encriptado}')\n# Salida: KROD PXQGR"
+      ]
+    },
+    {
+      "prompt": "Que es la complejidad algorítmica?",
+      "completion": "La complejidad algorítmica mide la eficiencia de un algoritmo en términos de tiempo de ejecución (complejidad temporal) y uso de memoria (complejidad espacial), usando la notación Big O.",
+      "intent": "programacion",
+      "pattern": ["complejidad algoritmica", "big o notation", "eficiencia algoritmos", "notacion asintotica"],
+      "task": "instruir",
+      "meaning": "explicación de complejidad algorítmica y notación Big O",
+      "examples": [
+        "Usuario: Que es la complejidad algorítmica?\nBot: La complejidad algorítmica mide la eficiencia. Ejemplos comunes:\n\n# O(1) - Tiempo constante\ndef acceso_directo(lista, indice):\n    return lista[indice]\n\n# O(n) - Tiempo lineal\ndef busqueda_lineal(lista, objetivo):\n    for elemento in lista:\n        if elemento == objetivo:\n            return True\n    return False\n\n# O(n²) - Tiempo cuadrático\ndef comparar_todos(lista):\n    for i in lista:\n        for j in lista:\n            print(f'{i} vs {j}')\n\n# O(log n) - Tiempo logarítmico\ndef busqueda_binaria(lista_ordenada, objetivo):\n    izq, der = 0, len(lista_ordenada) - 1\n    while izq <= der:\n        medio = (izq + der) // 2\n        if lista_ordenada[medio] == objetivo:\n            return medio\n        elif lista_ordenada[medio] < objetivo:\n            izq = medio + 1\n        else:\n            der = medio - 1\n    return -1"
+      ]
+    },
+    {
+      "prompt": "Que es CORS?",
+      "completion": "CORS (Cross-Origin Resource Sharing) es un mecanismo de seguridad que permite o restringe recursos web para ser accedidos desde diferentes dominios. Ayuda a prevenir solicitudes no autorizadas entre sitios.",
+      "intent": "ciberseguridad",
+      "pattern": ["cors", "cross origin", "seguridad web", "politica mismo origen"],
+      "task": "instruir",
+      "meaning": "explicación de CORS y su importancia en seguridad web",
+      "examples": [
+        "Usuario: Que es CORS?\nBot: CORS controla el acceso a recursos entre dominios. Ejemplo:\n\n# Configuración de CORS en servidor Express:\nconst express = require('express');\nconst cors = require('cors');\nconst app = express();\n\n# Permitir todos los orígenes (no recomendado en producción)\napp.use(cors());\n\n# Configuración más segura:\napp.use(cors({\n    origin: 'https://miapp.com',\n    methods: ['GET', 'POST'],\n    allowedHeaders: ['Content-Type', 'Authorization'],\n    credentials: true\n}));\n\n# Error común en navegador sin CORS:\n# Access to fetch at 'https://api.ejemplo.com' from origin 'https://miapp.com' \n# has been blocked by CORS policy"
+      ]
     }
   ]
 }
