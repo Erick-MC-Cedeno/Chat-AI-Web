@@ -25,9 +25,9 @@ nlp = spacy.load("es_core_news_sm")
 memory = OrderedDict()
 
 # Configuracion
-VOCAB_SIZE = 10000  # Aumentar el tamaño del vocabulario
+VOCAB_SIZE = 500  # Aumentar el tamaño del vocabulario
 EMBEDDING_DIM = 200  # Incrementar la dimensión de los embeddings
-MAX_LEN = 80  # Aumentar la longitud máxima de las secuencias
+MAX_LEN = 200  # Aumentar la longitud máxima de las secuencias
 NUM_NEURONS = 100  # Incrementar el número de neuronas en la capa LSTM
 EPOCHS = 100  # Reducir el número de épocas para evitar sobreajuste
 BATCH_SIZE = 32  # Incrementar el tamaño del batch
