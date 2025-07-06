@@ -31,10 +31,8 @@ Una aplicación web moderna de chat impulsada por inteligencia artificial, const
 
 ## Capturas de Pantalla 🖼️
 
-<div align="center">
-  <img src="/photos/chat1.png" alt="Chat 1" width="400" style="margin: 10px;" />
-  <img src="/photos/chat2.png" alt="Chat 2" width="400" style="margin: 10px;" />
-</div>
+![Chat 1](/photos/chat1.png)
+![Chat 2](/photos/chat2.png)
 
 ## Estructura del Proyecto 📁
 
