@@ -28,6 +28,14 @@ Una aplicación web moderna de chat impulsada por inteligencia artificial, const
 ![Tensorflow](https://img.shields.io/badge/Tensorflow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
 
 
+
+## Capturas de Pantalla 🖼️
+
+<div align="center">
+  <img src="/photos/chat1.png" alt="Chat 1" width="400" style="margin: 10px;" />
+  <img src="/photos/chat2.png" alt="Chat 2" width="400" style="margin: 10px;" />
+</div>
+
 ## Estructura del Proyecto 📁
 
 ```
