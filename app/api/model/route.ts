@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Llamar directamente a la API Flask en GitHub Codespaces
-    const flaskResponse = await fetch("https://fictional-space-waddle-9rq7959q47v2954q-8000.app.github.dev/chat", {
+    const flaskResponse = await fetch("https://ominous-waffle-9rq7959q557395rv-8000.app.github.dev/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
