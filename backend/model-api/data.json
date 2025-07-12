@@ -72,15 +72,108 @@
       "meaning": "inicio de conversacion amigable",
       "examples": ["Usuario: Como te llamas?\nBot: Soy un asistente virtual creado para ayudarte. No tengo un nombre propio."]
     },
+   {
+  "prompt": "Que puedes hacer?",
+  "completion": "Puedo ayudarte con programación (Python, Java, JavaScript, etc.), hacking ético y seguridad informática, administración de sistemas Linux, conceptos técnicos avanzados (redes, criptografía, algoritmos) y diseño y optimización de bases de datos (SQL y NoSQL). También respondo dudas generales y te guío en tus proyectos.",
+  "intent": "saludos",
+  "pattern": [
+    "que puedes hacer",
+    "qué sabes hacer",
+    "cuáles son tus habilidades",
+    "en qué me puedes ayudar",
+    "qué puedes ayudarme",
+    "qué sabes sobre programación",
+    "sabes de hacking",
+    "trabajas con bases de datos",
+    "puedes explicarme conceptos técnicos"
+  ],
+  "task": "saludo",
+  "meaning": "inicio de conversación y presentación de capacidades",
+  "examples": [
+    "Usuario: Qué puedes hacer?\nBot: Puedo ayudarte con programación (Python, Java, JavaScript, etc.), hacking ético y seguridad informática, administración de sistemas Linux, conceptos técnicos avanzados (redes, criptografía, algoritmos) y diseño y optimización de bases de datos (SQL y NoSQL). También respondo dudas generales y te guío en tus proyectos."
+  ]
+}
+,
     {
-      "prompt": "Que puedes hacer?",
-      "completion": "Puedo responder preguntas, dar informacion y ayudarte con tareas relacionadas con Linux y seguridad informatica.",
-      "intent": "saludos",
-      "pattern": ["que puedes hacer", "que puedes hacer", "puedo ayudarte", "como puedo ayudarte", "que puedo hacer"],
-      "task": "saludo",
-      "meaning": "inicio de conversacion amigable",
-      "examples": ["Usuario: Que puedes hacer?\nBot: Puedo responder preguntas, dar informacion y ayudarte con tareas relacionadas con Linux y seguridad informatica."]
+      "prompt": "Que es Python?",
+      "completion": "Python es un lenguaje de programación de alto nivel, interpretado y multipropósito. Es conocido por su sintaxis clara y legibilidad, lo que lo hace ideal para principiantes y expertos.",
+      "intent": "programacion",
+      "pattern": ["que es python", "python lenguaje", "introduccion a python", "caracteristicas de python"],
+      "task": "instruir",
+      "meaning": "explicacion basica sobre el lenguaje de programacion Python",
+      "examples": [
+        "Usuario: Que es Python?\nBot: Python es un lenguaje de programación versátil. Ejemplo:\n\n# Imprimir 'Hola Mundo'\nprint('Hola Mundo')\n\n# Crear una lista\nnumeros = [1, 2, 3, 4]\n\n# Definir una función\n\ndef sumar(a, b):\n    return a + b\n\nprint(sumar(5, 3))  # Salida: 8"
+      ]
     },
+    {
+      "prompt": "Que es un algoritmo?",
+      "completion": "Un algoritmo es un conjunto de instrucciones o pasos definidos para resolver un problema o realizar una tarea específica. Se puede expresar en pseudocódigo, diagramas de flujo o lenguajes de programación.",
+      "intent": "programacion",
+      "pattern": ["que es un algoritmo", "definicion de algoritmo", "concepto de algoritmo", "ejemplo de algoritmo"],
+      "task": "instruir",
+      "meaning": "explicacion basica sobre el concepto de algoritmo",
+      "examples": [
+        "Usuario: Que es un algoritmo?\nBot: Un algoritmo es una secuencia de pasos para resolver un problema. Ejemplo:\n\n1. Tomar dos números A y B\n2. Sumar A y B\n3. Mostrar el resultado"
+      ]
+    },
+    {
+      "prompt": "Que es un sistema operativo?",
+      "completion": "Un sistema operativo es el software que gestiona los recursos de hardware y software de una computadora. Proporciona servicios básicos para la ejecución de programas y la interacción con el usuario.",
+      "intent": "programacion",
+      "pattern": ["que es un sistema operativo", "definicion de sistema operativo", "concepto de sistema operativo", "ejemplo de sistema operativo"],
+      "task": "instruir",
+      "meaning": "explicacion basica sobre el concepto de sistema operativo",
+      "examples": [
+        "Usuario: Que es un sistema operativo?\nBot: Un sistema operativo gestiona hardware y software. Ejemplos:\n\n- Windows\n- macOS\n- Linux\n- Android"
+      ]
+    }, 
+
+     {
+      "prompt": "Que es una base de datos?",
+      "completion": "Una base de datos es un sistema de almacenamiento de datos estructurados y organizados. Permite almacenar, recuperar y manipular datos de manera eficiente y segura.",
+      "intent": "programacion",
+      "pattern": ["que es una base de datos", "definicion de base de datos", "concepto de base de datos", "ejemplo de base de datos"],
+      "task": "instruir",
+      "meaning": "explicacion basica sobre el concepto de base de datos",
+      "examples": [
+        "Usuario: Que es una base de datos?\nBot: Una base de datos es un sistema de almacenamiento de datos. Ejemplo:\n\n1. Crear una tabla llamada 'usuarios'\n2. Insertar datos en la tabla\n3. Consultar datos de la tabla"
+      ]
+    },
+    {
+      "prompt": "Que es un lenguaje de programacion?",
+      "completion": "Un lenguaje de programación es un conjunto de reglas y sintaxis que permite a los programadores escribir instrucciones que una computadora puede entender y ejecutar.",
+      "intent": "programacion",
+      "pattern": ["que es un lenguaje de programacion", "definicion de lenguaje de programacion", "concepto de lenguaje de programacion", "ejemplo de lenguaje de programacion"],
+      "task": "instruir",
+      "meaning": "explicacion basica sobre el concepto de lenguaje de programacion",
+      "examples": [
+        "Usuario: Que es un lenguaje de programacion?\nBot: Un lenguaje de programación permite escribir instrucciones para computadoras. Ejemplos:\n\n- Python\n- Java\n- JavaScript\n- C++"
+      ]
+    },
+
+    {
+      "prompt": "Que es un bug?",
+      "completion": "Un bug es un error o fallo en el código de un programa que causa un comportamiento inesperado o incorrecto. Los bugs pueden ser causados por errores de lógica, sintaxis o problemas de diseño.",
+      "intent": "programacion",
+      "pattern": ["que es un bug", "definicion de bug", "error en codigo", "fallo en programa"],
+      "task": "instruir",
+      "meaning": "explicacion basica sobre el concepto de bug en programacion",
+      "examples": [
+        "Usuario: Que es un bug?\nBot: Un bug es un error en el código. Ejemplo:\n\n# Código con bug\nif x = 10:  # Error de sintaxis\n    print('X es 10')\n\n# Corrección\nif x == 10:\n    print('X es 10')"
+      ]
+    },
+    {
+      "prompt": "Que es un framework?",
+      "completion": "Un framework es un conjunto de herramientas y bibliotecas que proporciona una estructura predefinida para desarrollar aplicaciones. Facilita el desarrollo al ofrecer funcionalidades comunes y buenas prácticas.",
+      "intent": "programacion",
+      "pattern": ["que es un framework", "definicion de framework", "concepto de framework", "ejemplo de framework"],
+      "task": "instruir",
+      "meaning": "explicacion basica sobre el concepto de framework en programacion",
+      "examples": [
+        "Usuario: Que es un framework?\nBot: Un framework es una estructura para desarrollar aplicaciones. Ejemplos:\n\n- Django (Python)\n- Spring (Java)\n- React (JavaScript)\n- Ruby on Rails (Ruby)"
+      ]
+    },
+     
     {
       "prompt": "Como estas",
       "completion": "Estoy bien, gracias. Y tu?",
@@ -460,6 +553,141 @@
       "pattern": ["especialidad programacion", "mejor tema", "fuerte programacion", "especializacion"],
       "task": "informar",
       "meaning": "descripción de especialidades principales",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué me puedes enseñar sobre programación orientada a objetos?",
+      "completion": "Puedo enseñarte sobre POO incluyendo:\n1. Clases y objetos\n2. Herencia y polimorfismo\n3. Encapsulación y abstracción\n4. Métodos especiales en Python\n5. Patrones de diseño OOP\n6. Buenas prácticas\nAquí hay un ejemplo básico:\n\nclass Animal:\n    def __init__(self, nombre):\n        self.nombre = nombre\n    \n    def hablar(self):\n        pass\n\nclass Perro(Animal):\n    def hablar(self):\n        return f'{self.nombre} dice: ¡Guau!'\n\n¿Te gustaría profundizar en algún concepto?",
+      "intent": "programacion",
+      "pattern": ["programacion objetos", "poo", "oop python", "clases objetos"],
+      "task": "instruir",
+      "meaning": "explicación detallada sobre programación orientada a objetos",
+      "examples": []
+    },
+    {
+      "prompt": "¿Cómo trabajas con bases de datos en Python?",
+      "completion": "Puedo ayudarte con bases de datos en Python usando:\n1. SQLite3 para bases locales\n2. MySQL/PostgreSQL para servidores\n3. ORMs como SQLAlchemy\n4. Consultas SQL básicas y avanzadas\n5. Manejo de conexiones\n6. Patrones de acceso a datos\nEjemplo básico con SQLite3:\n\nimport sqlite3\n\nconn = sqlite3.connect('ejemplo.db')\ncursor = conn.cursor()\n\ncursor.execute('''CREATE TABLE usuarios\n             (id INTEGER PRIMARY KEY,\n              nombre TEXT,\n              edad INTEGER)''')\n\n¿Qué aspecto te gustaría explorar?",
+      "intent": "programacion",
+      "pattern": ["bases datos python", "sqlite python", "mysql python", "database python"],
+      "task": "instruir",
+      "meaning": "explicación sobre trabajo con bases de datos en Python",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué sabes sobre testing en Python?",
+      "completion": "Puedo ayudarte con testing en Python usando:\n1. Unittest framework\n2. Pytest para testing moderno\n3. Mocking y fixtures\n4. TDD (Test Driven Development)\n5. Cobertura de código\n6. Integration testing\nEjemplo con pytest:\n\ndef suma(a, b):\n    return a + b\n\ndef test_suma():\n    assert suma(2, 3) == 5\n    assert suma(-1, 1) == 0\n    assert suma(0, 0) == 0\n\n¿Quieres ver más ejemplos de testing?",
+      "intent": "programacion",
+      "pattern": ["testing python", "pruebas unitarias", "pytest", "unittest python"],
+      "task": "instruir",
+      "meaning": "explicación sobre testing en Python",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué frameworks web conoces en Python?",
+      "completion": "Conozco varios frameworks web en Python:\n1. Flask para aplicaciones ligeras\n2. Django para proyectos grandes\n3. FastAPI para APIs modernas\n4. Pyramid para flexibilidad\n5. aiohttp para async\n6. Sanic para alto rendimiento\nEjemplo con Flask:\n\nfrom flask import Flask\napp = Flask(__name__)\n\n@app.route('/')\ndef hello():\n    return 'Hola Mundo!'\n\n¿Quieres aprender más sobre algún framework?",
+      "intent": "programacion",
+      "pattern": ["frameworks web", "flask python", "django python", "fastapi python"],
+      "task": "instruir",
+      "meaning": "explicación sobre frameworks web en Python",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué herramientas de pentesting conoces?",
+      "completion": "Conozco varias herramientas de pentesting:\n1. Nmap para escaneo de puertos\n2. Wireshark para análisis de red\n3. Metasploit para pruebas de penetración\n4. Burp Suite para testing web\n5. John the Ripper para crackeo\n6. SQLmap para SQL injection\nEjemplo de uso de nmap:\n\nnmap -sV -sC 192.168.1.0/24\n\n¿Te gustaría aprender sobre alguna herramienta específica?",
+      "intent": "ciberseguridad",
+      "pattern": ["pentesting tools", "herramientas hacking", "tools seguridad", "pentesting"],
+      "task": "instruir",
+      "meaning": "explicación sobre herramientas de pentesting",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué sabes sobre ataques de red?",
+      "completion": "Puedo explicarte sobre varios tipos de ataques:\n1. Man in the Middle (MITM)\n2. DDoS y DoS\n3. ARP Spoofing\n4. DNS Spoofing\n5. MAC Flooding\n6. Session Hijacking\nPara prevenir MITM por ejemplo:\n- Usar HTTPS\n- Implementar certificados SSL\n- Verificar checksums\n¿Quieres profundizar en algún tipo de ataque?",
+      "intent": "ciberseguridad",
+      "pattern": ["ataques red", "network attacks", "mitm", "ddos"],
+      "task": "instruir",
+      "meaning": "explicación sobre tipos de ataques de red",
+      "examples": []
+    },
+    {
+      "prompt": "¿Cómo protejo mi red WiFi?",
+      "completion": "Para proteger tu red WiFi debes:\n1. Usar WPA3 o WPA2\n2. Cambiar contraseña por defecto\n3. Deshabilitar WPS\n4. Usar SSID oculto\n5. Filtrar MAC addresses\n6. Actualizar firmware del router\nEjemplo de contraseña segura:\nWiFi-2023!K9#mP$x\n\n¿Necesitas más detalles sobre alguna medida?",
+      "intent": "ciberseguridad",
+      "pattern": ["proteger wifi", "seguridad wifi", "wifi security", "router seguro"],
+      "task": "instruir",
+      "meaning": "consejos para proteger redes WiFi",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué técnicas de criptografía conoces?",
+      "completion": "Conozco varias técnicas criptográficas:\n1. Cifrado simétrico (AES, DES)\n2. Cifrado asimétrico (RSA)\n3. Funciones hash (MD5, SHA)\n4. Cifrado de curva elíptica\n5. Diffie-Hellman\n6. Certificados digitales\nEjemplo de hash en Python:\n\nimport hashlib\n\ndef hash_password(password):\n    return hashlib.sha256(password.encode()).hexdigest()\n\n¿Quieres aprender más sobre alguna técnica?",
+      "intent": "ciberseguridad",
+      "pattern": ["criptografia", "encryption", "cifrado", "hash"],
+      "task": "instruir",
+      "meaning": "explicación sobre técnicas criptográficas",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué puedes enseñarme sobre desarrollo web?",
+      "completion": "Puedo enseñarte sobre desarrollo web incluyendo:\n1. HTML5 y CSS3 modernos\n2. JavaScript y frameworks populares\n3. Backend con Python (Django/Flask)\n4. APIs RESTful y GraphQL\n5. Bases de datos web\n6. Seguridad web\n7. Optimización y rendimiento\n8. Responsive design\n¿Por cuál área te gustaría empezar?",
+      "intent": "capacidades",
+      "pattern": ["desarrollo web", "web development", "frontend", "backend"],
+      "task": "informar",
+      "meaning": "descripción de capacidades en desarrollo web",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué sabes sobre inteligencia artificial?",
+      "completion": "Puedo explicarte sobre IA incluyendo:\n1. Machine Learning básico\n2. Redes neuronales\n3. Procesamiento de lenguaje natural\n4. Algoritmos de clasificación\n5. Análisis de datos\n6. Python para IA (numpy, pandas, sklearn)\n7. Deep Learning conceptos básicos\n8. Aplicaciones prácticas de IA\n¿Qué aspecto te interesa más?",
+      "intent": "capacidades",
+      "pattern": ["inteligencia artificial", "ia", "machine learning", "ai"],
+      "task": "informar",
+      "meaning": "descripción de conocimientos en IA",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué otros lenguajes de programación dominas?",
+      "completion": "Además de Python, puedo ayudarte con:\n1. JavaScript/TypeScript\n2. Java básico\n3. C++ fundamentos\n4. SQL y lenguajes de bases de datos\n5. HTML/CSS\n6. Shell scripting\n7. PHP básico\n8. Markdown y lenguajes de marcado\nPuedo explicarte conceptos y mostrar ejemplos en cualquiera de estos lenguajes.",
+      "intent": "capacidades",
+      "pattern": ["otros lenguajes", "programacion lenguajes", "languages", "coding languages"],
+      "task": "informar",
+      "meaning": "descripción de lenguajes de programación conocidos",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué temas de sistemas operativos manejas?",
+      "completion": "Puedo ayudarte con temas de sistemas operativos como:\n1. Administración Linux/Unix\n2. Comandos y shell scripting\n3. Gestión de procesos y memoria\n4. Sistemas de archivos\n5. Redes y configuración\n6. Seguridad del sistema\n7. Virtualización\n8. Servicios y demonios\n¿Necesitas ayuda con algún tema específico?",
+      "intent": "capacidades",
+      "pattern": ["sistemas operativos", "linux", "unix", "os"],
+      "task": "informar",
+      "meaning": "descripción de conocimientos en sistemas operativos",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué sabes sobre desarrollo móvil?",
+      "completion": "Puedo orientarte en desarrollo móvil sobre:\n1. React Native\n2. Flutter básico\n3. Diseño de interfaces móviles\n4. APIs para aplicaciones móviles\n5. Almacenamiento local\n6. Push notifications\n7. Seguridad en apps móviles\n8. Testing de aplicaciones\n¿Te gustaría explorar algún tema en particular?",
+      "intent": "capacidades",
+      "pattern": ["desarrollo movil", "apps moviles", "mobile dev", "aplicaciones moviles"],
+      "task": "informar",
+      "meaning": "descripción de capacidades en desarrollo móvil",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué conocimientos tienes sobre bases de datos?",
+      "completion": "Mis conocimientos en bases de datos incluyen:\n1. SQL (MySQL, PostgreSQL)\n2. NoSQL (MongoDB, Redis)\n3. Diseño de bases de datos\n4. Normalización y optimización\n5. Queries y rendimiento\n6. Backups y recuperación\n7. Seguridad en bases de datos\n8. ORMs y frameworks\n¿Sobre qué tema necesitas ayuda?",
+      "intent": "capacidades",
+      "pattern": ["bases datos", "database", "sql", "nosql"],
+      "task": "informar",
+      "meaning": "descripción de conocimientos en bases de datos",
+      "examples": []
+    },
+    {
+      "prompt": "¿Qué metodologías de desarrollo conoces?",
+      "completion": "Conozco varias metodologías y prácticas:\n1. Agile y Scrum\n2. DevOps básico\n3. Test Driven Development\n4. Clean Code\n5. Control de versiones (Git)\n6. CI/CD conceptos\n7. Code review prácticas\n8. Documentación de código\n¿Te gustaría profundizar en alguna?",
+      "intent": "capacidades",
+      "pattern": ["metodologias", "agile", "devops", "desarrollo software"],
+      "task": "informar",
+      "meaning": "descripción de conocimientos en metodologías de desarrollo",
       "examples": []
     }
   ]

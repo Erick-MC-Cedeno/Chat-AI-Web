@@ -25,12 +25,12 @@ nlp = spacy.load("es_core_news_sm")
 memory = OrderedDict()
 
 # Configuracion
-VOCAB_SIZE = 500  # Aumentar el tamaño del vocabulario
-EMBEDDING_DIM = 200  # Incrementar la dimensión de los embeddings
-MAX_LEN = 200  # Aumentar la longitud máxima de las secuencias
-NUM_NEURONS = 100  # Incrementar el número de neuronas en la capa LSTM
-EPOCHS = 100  # Reducir el número de épocas para evitar sobreajuste
-BATCH_SIZE = 32  # Incrementar el tamaño del batch
+VOCAB_SIZE = 700  # Aumentar el tamaño del vocabulario
+EMBEDDING_DIM = 256  # Incrementar la dimensión de los embeddings
+MAX_LEN = 500  # Aumentar la longitud máxima de las secuencias
+NUM_NEURONS = 150  # Incrementar el número de neuronas en la capa LSTM
+EPOCHS = 28  # Reducir el número de épocas para evitar sobreajuste
+BATCH_SIZE = 40  # Incrementar el tamaño del batch
 INITIAL_LR = 1e-3  # Ajustar la tasa de aprendizaje inicial
 DROPOUT_RATE = 0.4  # Reducir la tasa de dropout
 L2_RATE = 1e-5  # Reducir la regularización L2
@@ -44,9 +44,13 @@ def warmup_scheduler(epoch, lr):
     return lr
 
 def normalize_text(text):
+    # Aumentar el límite de tokens que procesa spaCy
+    nlp.max_length = 1000000
     doc = nlp(text.lower())
-    tokens = [t.lemma_ for t in doc if t.is_alpha]
+    # Mantener más tokens para preservar el significado
+    tokens = [t.lemma_ for t in doc if t.is_alpha or t.is_digit]
     return ' '.join(tokens)
+
 
 def augment_texts(texts, completions):
     augmented = []
