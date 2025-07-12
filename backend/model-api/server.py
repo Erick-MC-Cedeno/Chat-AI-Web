@@ -97,7 +97,7 @@ def generate_response(user_text):
 
 # -------------------- FLASK --------------------
 app = Flask(__name__)
-CORS(app, origins=["https://ominous-waffle-9rq7959q557395rv-3000.app.github.dev"])  # <-- CORS habilitado
+CORS(app, origins=["https://silver-computing-machine-rqr4g6grxjwhp9x7-3000.app.github.dev"])  # <-- CORS habilitado
 
 @app.route("/chat", methods=["POST"])
 def chat():

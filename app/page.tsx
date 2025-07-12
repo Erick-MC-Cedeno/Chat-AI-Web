@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Card } from "@/components/ui/card"
 import { ChatHeader } from "@/components/chat/chat-header"
 import { MessagesArea } from "@/components/chat/messages-area"
 import { ChatInput } from "@/components/chat/chat-input"
@@ -30,7 +29,7 @@ export default function ChatbotUI() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex">
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex">
       {/* Sidebar - Hidden on mobile, shown on desktop */}
       <div className="hidden md:block">
         <ConversationSidebar
@@ -45,26 +44,36 @@ export default function ChatbotUI() {
         />
       </div>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 p-4 max-w-4xl mx-auto w-full">
-        <ChatHeader
-          connectionError={connectionError}
-          conversations={conversations}
-          currentConversationId={currentConversationId}
-          onNewConversation={createNewConversation}
-          onSwitchConversation={switchConversation}
-          onDeleteConversation={deleteConversation}
-          onUpdateTitle={updateConversationTitle}
-        />
+      {/* Main Chat Area - Sin Card contenedora */}
+      <div className="flex-1 flex flex-col h-screen">
+        {/* Header */}
+        <div className="flex-shrink-0">
+          {" "}
+          {/* Eliminado px-4 pt-4 para que el header ocupe todo el ancho */}
+          <ChatHeader
+            connectionError={connectionError}
+            conversations={conversations}
+            currentConversationId={currentConversationId}
+            onNewConversation={createNewConversation}
+            onSwitchConversation={switchConversation}
+            onDeleteConversation={deleteConversation}
+            onUpdateTitle={updateConversationTitle}
+          />
+          {connectionError && <ErrorAlert error={connectionError} />}
+        </div>
 
-        {connectionError && <ErrorAlert error={connectionError} />}
-
-        <Card className="h-[600px] flex flex-col border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+        {/* Messages Area - Usa toda la altura disponible */}
+        <div className="flex-1 min-h-0">
           <MessagesArea messages={currentConversation?.messages || []} />
-          <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
-        </Card>
+        </div>
 
-        <div className="text-center mt-6 text-sm text-muted-foreground">
+        {/* Input - Fijo en la parte inferior */}
+        <div className="flex-shrink-0">
+          <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
+        </div>
+
+        {/* Footer info */}
+        <div className="flex-shrink-0 text-center py-4 text-sm text-muted-foreground bg-white/50">
           <p>Chatbot desarrollado con Next.js, React y TensorFlow</p>
           <p className="text-xs mt-1">API: localhost/api/model</p>
         </div>
