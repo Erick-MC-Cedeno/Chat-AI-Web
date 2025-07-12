@@ -32,30 +32,30 @@ export class ChatbotAPIService {
 
       let text = data.response.replace(/\r\n/g, "\n")
 
-      // MEJORA 1: Detectar y transformar bloques de código que aparecen en la misma línea
-      // después de "Código:" o "Ejemplo en Python:", o que no están perfectamente indentados.
-      // Esto es útil si el bot no siempre indenta el código o lo pone en una sola línea.
-      text = text.replace(
-        /(^|\n)(Código:|Ejemplo en Python:)\s*(.*?)(?=\n|$)/g,
-        (_match, prefix, codePrefix, codeContent) => {
-          // Eliminar la palabra "python" si está incrustada en el código (ya que la añadiremos como lenguaje Markdown)
-          const cleanedCode = codeContent.replace(/\bpython\b/g, "").trim()
-          // Asegurarse de que el prefijo original se mantenga si es necesario, o simplemente reemplazarlo.
-          // Aquí, lo reemplazamos completamente con el bloque Markdown.
-          return `${prefix}\n\`\`\`python\n${cleanedCode}\n\`\`\`\n`
-        },
-      )
+      // MEJORA CLAVE: Detectar el prefijo de código y capturar todo el contenido subsiguiente como código.
+      // Esto es más robusto para casos donde el bot no indenta o pone todo en una línea.
+      const codePrefixRegex = /(^|\n)(Código:|Ejemplo en Python:)\s*/
+      const match = text.match(codePrefixRegex)
 
-      // MEJORA 2 (existente): Transformar bloques indentados en bloques de código Markdown
-      // Esto se ejecuta después de la mejora 1, para capturar cualquier bloque indentado restante
-      // que no haya sido capturado por la primera regex (por ejemplo, si no tiene un prefijo explícito).
-      text = text.replace(
-        /(^|\n)((?:(?: {4}|\t).*(\n|$))+)/g, // Simplificado para capturar solo bloques indentados
-        (_match, prefix, codeBlock) => {
+      if (match) {
+        const prefixPart = match[0] // e.g., " Ejemplo en Python:"
+        const textBeforePrefix = text.substring(0, match.index) // Texto antes del prefijo
+        let codeContent = text.substring(match.index + prefixPart.length) // Todo lo que sigue al prefijo
+
+        // Eliminar la palabra "python" si está incrustada en el código (ya que la añadiremos como lenguaje Markdown)
+        codeContent = codeContent.replace(/\bpython\b/g, "").trim()
+
+        // Reconstruir el mensaje: texto antes del prefijo + bloque de código Markdown
+        text = `${textBeforePrefix.trimEnd()}\n\`\`\`python\n${codeContent}\n\`\`\`\n`
+      } else {
+        // Fallback a la detección basada en indentación si no se encuentra un prefijo explícito.
+        // Esto es útil para bloques de código sin "Código:" o "Ejemplo en Python:"
+        // pero que están consistentemente indentados.
+        text = text.replace(/(^|\n)((?:(?: {4}|\t).*(\n|$))+)/g, (_match, prefix, codeBlock) => {
           const cleanedCode = codeBlock.replace(/^ {4}|\t/gm, "").trimEnd()
           return `${prefix}\n\`\`\`python\n${cleanedCode}\n\`\`\`\n`
-        },
-      )
+        })
+      }
 
       return text
     } catch (error) {
