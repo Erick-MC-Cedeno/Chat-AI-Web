@@ -29,7 +29,7 @@ with open("response_map.json", "r", encoding="utf-8") as f:
 with open("data.json", "r", encoding="utf-8") as f:
     data = json.load(f)["conversations"]
 
-model = tf.keras.models.load_model("chatbot_model_final.keras")
+model = tf.keras.models.load_model("best_model.keras")
 nlp = spacy.load("es_core_news_sm")
 oov_index = tokenizer.word_index.get(OOV_TOKEN, 1)
 memory = OrderedDict()

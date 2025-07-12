@@ -140,7 +140,7 @@
       "intent": "ciberseguridad",
       "pattern": ["sql injection", "inyeccion sql", "ataque sql", "vulnerabilidad sql"],
       "task": "instruir",
-      "meaning": "explicación sobre el ataque SQL Injection y cómo prevenirlo",
+      "meaning": "explicacion sobre el ataque SQL Injection y como prevenirlo",
       "examples": [
         "Usuario: Que es SQL Injection?\nBot: SQL Injection es un ataque que aprovecha entradas no validadas. Ejemplo de ataque:\n\nVulnerable:\nSELECT * FROM usuarios WHERE usuario = '$input'\n\nAtaque:\n$input = \"admin' OR '1'='1\"\n\nPrevención:\nUsar consultas parametrizadas:\nSELECT * FROM usuarios WHERE usuario = ?"
       ]
@@ -151,7 +151,7 @@
       "intent": "programacion",
       "pattern": ["que son variables", "variables programacion", "como usar variables", "declarar variables"],
       "task": "instruir",
-      "meaning": "explicación sobre el concepto de variables en programación",
+      "meaning": "explicacion sobre el concepto de variables en programacion",
       "examples": [
         "Usuario: Que son las variables en programacion?\nBot: Las variables almacenan datos que podemos usar después. Ejemplo:\n\nPython:\nnombre = 'Juan'  # Variable tipo texto\nedad = 25      # Variable tipo número\nactivo = True   # Variable tipo booleano\n\nprint(f'{nombre} tiene {edad} años')"
       ]
@@ -162,7 +162,7 @@
       "intent": "ciberseguridad",
       "pattern": ["fuerza bruta", "ataque contraseñas", "descifrar password", "crackear contraseña"],
       "task": "instruir",
-      "meaning": "explicación sobre ataques de fuerza bruta y su prevención",
+      "meaning": "explicacion sobre ataques de fuerza bruta y su prevencion",
       "examples": [
         "Usuario: Como funciona un ataque de fuerza bruta?\nBot: Un ataque de fuerza bruta prueba sistemáticamente contraseñas. Ejemplo:\n\nContraseña débil: 'abc123'\nTiempo para crackear: segundos\n\nContraseña fuerte: 'P@ssw0rd!2023'\nTiempo para crackear: años\n\nPrevención:\n- Usar contraseñas largas y complejas\n- Implementar bloqueo después de varios intentos\n- Usar autenticación de dos factores"
       ]
@@ -184,7 +184,7 @@
       "intent": "programacion",
       "pattern": ["estructura control", "if else", "bucles", "control flujo", "condicionales"],
       "task": "instruir",
-      "meaning": "explicación sobre estructuras de control en programación",
+      "meaning": "explicacion sobre estructuras de control en programacion",
       "examples": [
         "Usuario: Que es una estructura de control?\nBot: Las estructuras de control determinan el flujo del programa. Ejemplo:\n\nif edad >= 18:\n    print('Eres mayor de edad')\nelse:\n    print('Eres menor de edad')\n\nwhile contador > 0:\n    print(contador)\n    contador -= 1"
       ]
@@ -217,7 +217,7 @@
       "intent": "programacion",
       "pattern": ["bubble sort", "ordenamiento burbuja", "algoritmo ordenamiento", "como ordenar lista"],
       "task": "instruir",
-      "meaning": "explicación del algoritmo de ordenamiento burbuja con ejemplo",
+      "meaning": "explicacion del algoritmo de ordenamiento burbuja con ejemplo",
       "examples": [
         "Usuario: Que es el algoritmo Bubble Sort?\nBot: Bubble Sort compara elementos adyacentes y los intercambia. Ejemplo en Python:\n\ndef bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n\n# Ejemplo de uso:\nnumeros = [64, 34, 25, 12, 22, 11, 90]\nbubble_sort(numeros)\nprint('Lista ordenada:', numeros)\n# Salida: [11, 12, 22, 25, 34, 64, 90]"
       ]
@@ -228,7 +228,7 @@
       "intent": "programacion",
       "pattern": ["lista enlazada", "linked list", "nodos enlazados", "implementar lista"],
       "task": "instruir",
-      "meaning": "explicación de implementación de lista enlazada con ejemplo",
+      "meaning": "explicacion de implementacion de lista enlazada con ejemplo",
       "examples": [
         "Usuario: Como implemento una lista enlazada?\nBot: Una lista enlazada se implementa con nodos. Ejemplo en Python:\n\nclass Nodo:\n    def __init__(self, dato):\n        self.dato = dato\n        self.siguiente = None\n\nclass ListaEnlazada:\n    def __init__(self):\n        self.cabeza = None\n\n    def agregar(self, dato):\n        nuevo_nodo = Nodo(dato)\n        if not self.cabeza:\n            self.cabeza = nuevo_nodo\n            return\n        actual = self.cabeza\n        while actual.siguiente:\n            actual = actual.siguiente\n        actual.siguiente = nuevo_nodo\n\n# Ejemplo de uso:\nlista = ListaEnlazada()\nlista.agregar(1)\nlista.agregar(2)\nlista.agregar(3)"
       ]
@@ -239,7 +239,7 @@
       "intent": "ciberseguridad",
       "pattern": ["xss", "cross site scripting", "inyeccion javascript", "seguridad web"],
       "task": "instruir",
-      "meaning": "explicación sobre ataques XSS y su prevención",
+      "meaning": "explicacion sobre ataques XSS y su prevencion",
       "examples": [
         "Usuario: Explícame que es XSS\nBot: XSS permite inyectar scripts maliciosos. Ejemplo:\n\nVulnerable:\n<input value='<?php echo $_GET['nombre']; ?>'>\n\nAtaque:\n?nombre=<script>alert('XSS')</script>\n\nPrevención:\n1. Escapar caracteres especiales\n2. Usar Content Security Policy (CSP)\n3. Validar y sanitizar entradas\n4. Ejemplo seguro:\nhtmlspecialchars($_GET['nombre'], ENT_QUOTES, 'UTF-8');"
       ]
@@ -250,7 +250,7 @@
       "intent": "programacion",
       "pattern": ["recursividad", "funcion recursiva", "recursion", "llamada recursiva"],
       "task": "instruir",
-      "meaning": "explicación de recursividad con ejemplo práctico",
+      "meaning": "explicacion de recursividad con ejemplo practico",
       "examples": [
         "Usuario: Que es la recursividad en programación?\nBot: La recursividad es cuando una función se llama a sí misma. Ejemplo del factorial:\n\ndef factorial(n):\n    # Caso base\n    if n == 0 or n == 1:\n        return 1\n    # Caso recursivo\n    return n * factorial(n-1)\n\n# Ejemplo de uso:\nprint(factorial(5))  # 5 * 4 * 3 * 2 * 1 = 120\n\n# La función se llama a sí misma con n-1 hasta llegar al caso base"
       ]
@@ -261,7 +261,7 @@
       "intent": "ciberseguridad",
       "pattern": ["cifrado cesar", "caesar cipher", "criptografia basica", "desplazamiento letras"],
       "task": "instruir",
-      "meaning": "explicación del cifrado César con implementación",
+      "meaning": "explicacion del cifrado Cesar con implementacion",
       "examples": [
         "Usuario: Como funciona el cifrado César?\nBot: El cifrado César desplaza cada letra N posiciones. Ejemplo en Python:\n\ndef cifrado_cesar(texto, desplazamiento):\n    resultado = ''\n    for letra in texto:\n        if letra.isalpha():\n            # Determinar el código ASCII base (65 para mayúsculas, 97 para minúsculas)\n            ascii_base = 65 if letra.isupper() else 97\n            # Aplicar el desplazamiento y mantener en el rango del alfabeto\n            nuevo_ascii = (ord(letra) - ascii_base + desplazamiento) % 26 + ascii_base\n            resultado += chr(nuevo_ascii)\n        else:\n            resultado += letra\n    return resultado\n\n# Ejemplo:\ntexto = 'HOLA MUNDO'\nencriptado = cifrado_cesar(texto, 3)\nprint(f'Original: {texto}')\nprint(f'Cifrado: {encriptado}')\n# Salida: KROD PXQGR"
       ]
@@ -272,7 +272,7 @@
       "intent": "programacion",
       "pattern": ["complejidad algoritmica", "big o notation", "eficiencia algoritmos", "notacion asintotica"],
       "task": "instruir",
-      "meaning": "explicación de complejidad algorítmica y notación Big O",
+      "meaning": "explicacion de complejidad algoritmica y notacion Big O",
       "examples": [
         "Usuario: Que es la complejidad algorítmica?\nBot: La complejidad algorítmica mide la eficiencia. Ejemplos comunes:\n\n# O(1) - Tiempo constante\ndef acceso_directo(lista, indice):\n    return lista[indice]\n\n# O(n) - Tiempo lineal\ndef busqueda_lineal(lista, objetivo):\n    for elemento in lista:\n        if elemento == objetivo:\n            return True\n    return False\n\n# O(n²) - Tiempo cuadrático\ndef comparar_todos(lista):\n    for i in lista:\n        for j in lista:\n            print(f'{i} vs {j}')\n\n# O(log n) - Tiempo logarítmico\ndef busqueda_binaria(lista_ordenada, objetivo):\n    izq, der = 0, len(lista_ordenada) - 1\n    while izq <= der:\n        medio = (izq + der) // 2\n        if lista_ordenada[medio] == objetivo:\n            return medio\n        elif lista_ordenada[medio] < objetivo:\n            izq = medio + 1\n        else:\n            der = medio - 1\n    return -1"
       ]
@@ -287,6 +287,180 @@
       "examples": [
         "Usuario: Que es CORS?\nBot: CORS controla el acceso a recursos entre dominios. Ejemplo:\n\n# Configuración de CORS en servidor Express:\nconst express = require('express');\nconst cors = require('cors');\nconst app = express();\n\n# Permitir todos los orígenes (no recomendado en producción)\napp.use(cors());\n\n# Configuración más segura:\napp.use(cors({\n    origin: 'https://miapp.com',\n    methods: ['GET', 'POST'],\n    allowedHeaders: ['Content-Type', 'Authorization'],\n    credentials: true\n}));\n\n# Error común en navegador sin CORS:\n# Access to fetch at 'https://api.ejemplo.com' from origin 'https://miapp.com' \n# has been blocked by CORS policy"
       ]
+    },
+    {
+      "prompt": "Hey, como va todo?",
+      "completion": "¡Hey! Todo va muy bien, ¿qué tal tu día? ¿En qué puedo ayudarte?",
+      "intent": "saludos",
+      "pattern": ["hey", "como va", "que tal todo", "como va todo"],
+      "task": "saludo",
+      "meaning": "saludo informal y amigable",
+      "examples": []
+    },
+    {
+      "prompt": "Como puedo usar list comprehension en Python?",
+      "completion": "List comprehension es una forma concisa de crear listas en Python. La sintaxis básica es: [expresion for elemento in iterable if condicion]",
+      "intent": "programacion",
+      "pattern": ["list comprehension", "comprehension python", "crear listas", "lista python"],
+      "task": "instruir",
+      "meaning": "explicacion sobre list comprehension en Python con ejemplos",
+      "examples": [
+        "Usuario: Como puedo usar list comprehension en Python?\nBot: Las list comprehension son muy útiles. Ejemplos:\n\n# Crear lista de números pares\npares = [x for x in range(10) if x % 2 == 0]\nprint(pares)  # [0, 2, 4, 6, 8]\n\n# Convertir strings a mayúsculas\npalabras = ['hola', 'mundo', 'python']\nmayusculas = [p.upper() for p in palabras]\nprint(mayusculas)  # ['HOLA', 'MUNDO', 'PYTHON']\n\n# Crear matriz 3x3\nmatriz = [[i+j for j in range(3)] for i in range(0,9,3)]\nprint(matriz)  # [[0,1,2], [3,4,5], [6,7,8]]"
+      ]
+    },
+    {
+      "prompt": "Que son los decoradores en Python?",
+      "completion": "Los decoradores son funciones que modifican el comportamiento de otras funciones. Se denotan con el símbolo @ y son una forma de metaprogramación.",
+      "intent": "programacion",
+      "pattern": ["decoradores python", "decorator", "@decorator", "python decorator"],
+      "task": "instruir",
+      "meaning": "explicacion sobre decoradores en Python con ejemplos",
+      "examples": [
+        "Usuario: Que son los decoradores en Python?\nBot: Los decoradores modifican funciones. Ejemplo:\n\n# Decorador que mide tiempo de ejecución\nimport time\n\ndef medir_tiempo(funcion):\n    def wrapper(*args, **kwargs):\n        inicio = time.time()\n        resultado = funcion(*args, **kwargs)\n        fin = time.time()\n        print(f'Tiempo de ejecución: {fin - inicio} segundos')\n        return resultado\n    return wrapper\n\n@medir_tiempo\ndef proceso_largo():\n    time.sleep(2)\n    print('Proceso completado')\n\n# Uso:\nproceso_largo()"
+      ]
+    },
+    {
+      "prompt": "Explícame los generadores en Python",
+      "completion": "Los generadores son funciones especiales que retornan un iterador. Usan 'yield' en lugar de 'return' y son eficientes en memoria porque generan valores bajo demanda.",
+      "intent": "programacion",
+      "pattern": ["generadores", "yield python", "iterador python", "generator python"],
+      "task": "instruir",
+      "meaning": "explicacion sobre generadores en Python con ejemplos",
+      "examples": [
+        "Usuario: Explícame los generadores en Python\nBot: Los generadores son muy útiles para manejar grandes conjuntos de datos. Ejemplo:\n\ndef numeros_pares(limite):\n    n = 0\n    while n < limite:\n        yield n\n        n += 2\n\n# Uso del generador\ngenerador = numeros_pares(10)\nprint(next(generador))  # 0\nprint(next(generador))  # 2\n\n# Usar en un loop\nfor num in numeros_pares(8):\n    print(num)  # Imprime 0, 2, 4, 6\n\n# Generador con expresión\ncuadrados = (x*x for x in range(5))\nprint(list(cuadrados))  # [0, 1, 4, 9, 16]"
+      ]
+    },
+    {
+      "prompt": "Como manejo excepciones en Python?",
+      "completion": "Las excepciones se manejan usando bloques try-except. Puedes capturar excepciones específicas o generales y ejecutar código de limpieza con finally.",
+      "intent": "programacion",
+      "pattern": ["excepciones python", "try except", "manejar errores", "try catch python"],
+      "task": "instruir",
+      "meaning": "explicacion sobre manejo de excepciones en Python con ejemplos",
+      "examples": [
+        "Usuario: Como manejo excepciones en Python?\nBot: El manejo de excepciones es fundamental. Ejemplo:\n\ndef dividir_numeros(a, b):\n    try:\n        resultado = a / b\n        return resultado\n    except ZeroDivisionError:\n        print('Error: División por cero')\n        return None\n    except TypeError:\n        print('Error: Tipo de datos incorrecto')\n        return None\n    finally:\n        print('Operación completada')\n\n# Ejemplos de uso:\nprint(dividir_numeros(10, 2))    # 5.0\nprint(dividir_numeros(10, 0))    # Error: División por cero\nprint(dividir_numeros('10', 2))  # Error: Tipo de datos incorrecto"
+      ]
+    },
+    {
+      "prompt": "Que es el operador walrus en Python?",
+      "completion": "El operador walrus (:=) introducido en Python 3.8 permite asignar valores a variables dentro de expresiones, lo que puede hacer el código más conciso.",
+      "intent": "programacion",
+      "pattern": ["walrus", "operador morsa", ":= python", "asignacion expresion"],
+      "task": "instruir",
+      "meaning": "explicacion sobre el operador walrus en Python con ejemplos",
+      "examples": [
+        "Usuario: Que es el operador walrus en Python?\nBot: El operador walrus permite asignar y evaluar en la misma expresión. Ejemplos:\n\n# Sin operador walrus\ncadena = input('Escribe algo: ')\nwhile cadena != '':\n    print(f'Escribiste: {cadena}')\n    cadena = input('Escribe algo: ')\n\n# Con operador walrus\nwhile (cadena := input('Escribe algo: ')) != '':\n    print(f'Escribiste: {cadena}')\n\n# Otro ejemplo útil\nif (n := len(lista)) > 10:\n    print(f'Lista muy larga ({n} elementos)')\n\n# En list comprehension\npares = [num for num in range(10) if (cuadrado := num * num) < 50]"
+      ]
+    },
+    {
+      "prompt": "Que tal va todo",
+      "completion": "¡Todo va genial! ¿Cómo puedo ayudarte hoy con tus preguntas de programación?",
+      "intent": "saludos",
+      "pattern": ["que tal va", "como va", "todo bien", "como estas"],
+      "task": "saludo",
+      "meaning": "saludo informal para iniciar conversación",
+      "examples": []
+    },
+    {
+      "prompt": "Como funcionan los context managers en Python?",
+      "completion": "Los context managers en Python (using with) garantizan la limpieza adecuada de recursos. Se implementan usando los métodos __enter__ y __exit__ o el decorador @contextmanager.",
+      "intent": "programacion",
+      "pattern": ["context manager", "with python", "contextmanager", "manejo contexto"],
+      "task": "instruir",
+      "meaning": "explicacion sobre context managers en Python con ejemplos",
+      "examples": [
+        "Usuario: Como funcionan los context managers en Python?\nBot: Los context managers son útiles para manejar recursos. Ejemplo:\n\nfrom contextlib import contextmanager\nimport time\n\n# Usando una clase\nclass Timer:\n    def __enter__(self):\n        self.inicio = time.time()\n        return self\n\n    def __exit__(self, *args):\n        self.fin = time.time()\n        print(f'Tiempo: {self.fin - self.inicio} segundos')\n\n# Usando el decorador\n@contextmanager\ndef timer():\n    inicio = time.time()\n    yield\n    fin = time.time()\n    print(f'Tiempo: {fin - inicio} segundos')\n\n# Uso:\nwith Timer():\n    time.sleep(1)\n\nwith timer():\n    time.sleep(1)"
+      ]
+    },
+    {
+      "prompt": "En qué temas eres experto?",
+      "completion": "Me especializo en varios temas técnicos, incluyendo:\n1. Programación en Python (funciones, estructuras de datos, algoritmos)\n2. Seguridad informática (XSS, SQL Injection, protección contra malware)\n3. Estructuras de datos y algoritmos (listas enlazadas, ordenamiento)\n4. Criptografía básica\n5. Buenas prácticas de programación\n¿En cuál de estos temas te gustaría profundizar?",
+      "intent": "capacidades",
+      "pattern": ["eres experto", "especialidad", "que sabes", "temas experto", "areas conocimiento"],
+      "task": "informar",
+      "meaning": "explicacion de areas de experiencia del bot",
+      "examples": []
+    },
+    {
+      "prompt": "Qué tipos de problemas de programación puedes resolver?",
+      "completion": "Puedo ayudarte con diversos problemas de programación como:\n1. Debugging y corrección de errores\n2. Implementación de estructuras de datos\n3. Optimización de algoritmos\n4. Manejo de excepciones\n5. Patrones de diseño en Python\n6. Programación orientada a objetos\n¿Cuál es tu problema específico?",
+      "intent": "capacidades",
+      "pattern": ["problemas programacion", "puedes programar", "ayuda codigo", "resolver programacion"],
+      "task": "informar",
+      "meaning": "descripcion de capacidades en programacion",
+      "examples": []
+    },
+    {
+      "prompt": "Qué me puedes enseñar sobre seguridad informática?",
+      "completion": "Puedo enseñarte sobre diversos aspectos de seguridad informática:\n1. Prevención de ataques XSS y SQL Injection\n2. Protección contra ransomware y malware\n3. Técnicas de cifrado básicas\n4. Seguridad en aplicaciones web (CORS)\n5. Prácticas seguras de programación\n6. Protección contra ataques de fuerza bruta\n¿Qué tema te interesa más?",
+      "intent": "capacidades",
+      "pattern": ["seguridad informatica", "ciberseguridad", "proteccion datos", "seguridad web"],
+      "task": "informar",
+      "meaning": "descripción de conocimientos en seguridad",
+      "examples": []
+    },
+    {
+      "prompt": "Qué algoritmos conoces?",
+      "completion": "Conozco varios algoritmos importantes:\n1. Ordenamiento (Bubble Sort y otros)\n2. Búsqueda (lineal, binaria)\n3. Recursividad y sus aplicaciones\n4. Estructuras de datos (listas enlazadas, árboles)\n5. Algoritmos de cifrado (César)\n6. Análisis de complejidad algorítmica (Big O)\n¿Te gustaría aprender sobre alguno en particular?",
+      "intent": "capacidades",
+      "pattern": ["algoritmos conoces", "tipos algoritmos", "estructuras datos", "conoces algoritmos"],
+      "task": "informar",
+      "meaning": "descripción de conocimientos en algoritmos",
+      "examples": []
+    },
+    {
+      "prompt": "Me puedes ayudar con Python?",
+      "completion": "¡Claro! Puedo ayudarte con Python en varias áreas:\n1. Conceptos básicos (variables, funciones, bucles)\n2. Características avanzadas (decoradores, generadores, context managers)\n3. Manejo de excepciones y debugging\n4. List comprehensions y operador walrus\n5. Programación orientada a objetos\n6. Instalación de paquetes y dependencias\n¿Qué te gustaría aprender?",
+      "intent": "capacidades",
+      "pattern": ["ayuda python", "enseñar python", "aprender python", "programar python"],
+      "task": "informar",
+      "meaning": "descripción de capacidades en Python",
+      "examples": []
+    },
+    {
+      "prompt": "Qué tipos de ejemplos de código puedes mostrar?",
+      "completion": "Puedo proporcionar ejemplos de código en varios temas:\n1. Implementaciones de algoritmos\n2. Estructuras de datos en Python\n3. Manejo de errores y excepciones\n4. Código seguro y buenas prácticas\n5. Optimización y mejora de rendimiento\n6. Patrones de diseño comunes\nCada ejemplo incluye explicaciones detalladas y casos de uso.",
+      "intent": "capacidades",
+      "pattern": ["ejemplos codigo", "mostrar ejemplos", "codigo ejemplo", "ejemplos programacion"],
+      "task": "informar",
+      "meaning": "descripción de tipos de ejemplos disponibles",
+      "examples": []
+    },
+    {
+      "prompt": "Cuáles son tus capacidades en seguridad web?",
+      "completion": "En seguridad web puedo ayudarte con:\n1. Prevención de XSS (Cross-Site Scripting)\n2. Protección contra SQL Injection\n3. Configuración de CORS\n4. Mejores prácticas de seguridad\n5. Validación de entradas de usuario\n6. Protección de datos sensibles\n¿Necesitas ayuda con alguno de estos temas?",
+      "intent": "capacidades",
+      "pattern": ["seguridad web", "proteccion web", "seguridad aplicaciones", "web security"],
+      "task": "informar",
+      "meaning": "descripción de capacidades en seguridad web",
+      "examples": []
+    },
+    {
+      "prompt": "Qué nivel de programación puedes manejar?",
+      "completion": "Puedo manejar diferentes niveles de programación:\n1. Básico: variables, funciones, bucles\n2. Intermedio: POO, estructuras de datos, algoritmos\n3. Avanzado: decoradores, generadores, metaclases\n4. Optimización: complejidad algorítmica, mejora de rendimiento\n5. Seguridad: código seguro, prevención de vulnerabilidades\nMe adapto al nivel que necesites.",
+      "intent": "capacidades",
+      "pattern": ["nivel programacion", "dificultad codigo", "complejidad programacion", "nivel codigo"],
+      "task": "informar",
+      "meaning": "descripción de niveles de programación manejados",
+      "examples": []
+    },
+    {
+      "prompt": "Qué herramientas de desarrollo conoces?",
+      "completion": "Conozco varias herramientas y conceptos de desarrollo:\n1. Pip para gestión de paquetes Python\n2. Debugging y manejo de errores\n3. Control de versiones básico\n4. Buenas prácticas de código\n5. Optimización y refactorización\n6. Patrones de diseño comunes\n¿Necesitas ayuda con alguna herramienta específica?",
+      "intent": "capacidades",
+      "pattern": ["herramientas desarrollo", "tools programacion", "desarrollo software", "herramientas codigo"],
+      "task": "informar",
+      "meaning": "descripción de conocimientos en herramientas de desarrollo",
+      "examples": []
+    },
+    {
+      "prompt": "Cuál es tu especialidad en programación?",
+      "completion": "Mi especialidad principal es Python y seguridad informática, incluyendo:\n1. Desarrollo Python (básico a avanzado)\n2. Estructuras de datos y algoritmos\n3. Seguridad y protección de datos\n4. Optimización de código\n5. Debugging y resolución de problemas\n6. Buenas prácticas de programación\n¿Te interesa algún área en particular?",
+      "intent": "capacidades",
+      "pattern": ["especialidad programacion", "mejor tema", "fuerte programacion", "especializacion"],
+      "task": "informar",
+      "meaning": "descripción de especialidades principales",
+      "examples": []
     }
   ]
 }
