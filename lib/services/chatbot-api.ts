@@ -1,6 +1,6 @@
 export class ChatbotAPIService {
   // Configuración de la API Flask en GitHub Codespaces
-  private static readonly FLASK_API_URL = "https://scaling-doodle-gj54qrq5w463999w-8000.app.github.dev"
+  private static readonly FLASK_API_URL = "https://humble-train-v9g6vrvgqv534j9-8000.app.github.dev"
   private static readonly CHAT_ENDPOINT = "/chat"
 
   static async sendMessage(prompt: string): Promise<string> {
