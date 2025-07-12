@@ -39,9 +39,7 @@ export function ConversationSidebar({
   }
 
   const handleSaveEdit = () => {
-    if (editingId && editingTitle.trim()) {
-      onUpdateTitle(editingId, editingTitle.trim())
-    }
+    if (editingId && editingTitle.trim()) onUpdateTitle(editingId, editingTitle.trim())
     setEditingId(null)
     setEditingTitle("")
   }
@@ -55,15 +53,12 @@ export function ConversationSidebar({
     const now = new Date()
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
 
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    } else if (diffInHours < 24 * 7) {
-      return date.toLocaleDateString([], { weekday: "short" })
-    } else {
-      return date.toLocaleDateString([], { month: "short", day: "numeric" })
-    }
+    if (diffInHours < 24) return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    if (diffInHours < 24 * 7) return date.toLocaleDateString([], { weekday: "short" })
+    return date.toLocaleDateString([], { month: "short", day: "numeric" })
   }
 
+  // Collapsed view
   if (isCollapsed) {
     return (
       <div className="w-16 bg-white/90 backdrop-blur-sm border-r border-gray-200 flex flex-col items-center py-4 gap-4">
@@ -74,12 +69,12 @@ export function ConversationSidebar({
           <Plus className="h-5 w-5" />
         </Button>
         <div className="flex-1 flex flex-col gap-2 w-full px-2">
-          {conversations.slice(0, 5).map((conversation) => (
+          {conversations.slice(0, 5).map(conv => (
             <Button
-              key={conversation.id}
-              variant={conversation.id === currentConversationId ? "default" : "ghost"}
+              key={conv.id}
+              variant={conv.id === currentConversationId ? "default" : "ghost"}
               size="icon"
-              onClick={() => onSwitchConversation(conversation.id)}
+              onClick={() => onSwitchConversation(conv.id)}
               className="h-10 w-10 shrink-0"
             >
               <MessageSquare className="h-4 w-4" />
@@ -91,7 +86,7 @@ export function ConversationSidebar({
   }
 
   return (
-    <Card className="w-80 h-full border-0 border-r border-gray-200 rounded-none bg-white/90 backdrop-blur-sm">
+    <Card className="w-80 h-full border-0 border-r border-gray-200 rounded-none bg-white/90 backdrop-blur-sm flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">Conversaciones</CardTitle>
@@ -106,27 +101,29 @@ export function ConversationSidebar({
         </div>
       </CardHeader>
 
-      <CardContent className="p-0 flex-1">
-        <ScrollArea className="h-[calc(100vh-200px)]">
+      <CardContent className="p-0 flex-1 flex flex-col">
+        <ScrollArea className="flex-1">
           <div className="space-y-1 p-3">
-            {conversations.map((conversation) => (
+            {conversations.map(conversation => (
               <div
                 key={conversation.id}
-                className={`group relative rounded-lg p-3 cursor-pointer transition-colors ${
-                  conversation.id === currentConversationId ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
+                className={`group relative rounded-lg p-3 cursor-pointer transition-colors flex flex-col ${
+                  conversation.id === currentConversationId
+                    ? "bg-blue-50 border border-blue-200"
+                    : "hover:bg-gray-50"
                 }`}
                 onClick={() => onSwitchConversation(conversation.id)}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     {editingId === conversation.id ? (
-                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                         <Input
                           value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onChange={e => setEditingTitle(e.target.value)}
                           className="h-6 text-sm"
                           autoFocus
-                          onKeyDown={(e) => {
+                          onKeyDown={e => {
                             if (e.key === "Enter") handleSaveEdit()
                             if (e.key === "Escape") handleCancelEdit()
                           }}
@@ -147,36 +144,38 @@ export function ConversationSidebar({
                   </div>
 
                   {editingId !== conversation.id && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreVertical className="h-3 w-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleStartEdit(conversation)}>
-                          <Edit3 className="h-4 w-4 mr-2" />
-                          Renombrar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onDeleteConversation(conversation.id)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={e => e.stopPropagation()}
+                            className="h-6 w-6"
+                          >
+                            <MoreVertical className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleStartEdit(conversation)}>
+                            <Edit3 className="h-4 w-4 mr-2" />
+                            Renombrar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onDeleteConversation(conversation.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   )}
                 </div>
 
-                {conversation.messages.length > 1 && (
-                  <p className="text-xs text-muted-foreground mt-2 truncate">
+                {conversation.messages.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
                     {conversation.messages[conversation.messages.length - 1]?.content}
                   </p>
                 )}
