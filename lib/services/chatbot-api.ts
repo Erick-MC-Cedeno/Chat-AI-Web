@@ -1,7 +1,8 @@
 export class ChatbotAPIService {
   // Configuración de la API Flask en GitHub Codespaces
   // Considera usar una variable de entorno para FLASK_API_URL en un entorno de producción.
-  private static readonly FLASK_API_URL = "https://cautious-doodle-jv4j5754w742p46-8000.app.github.dev"
+  private static readonly FLASK_API_URL = "http://localhost:8000"
+
   private static readonly CHAT_ENDPOINT = "/chat"
 
   /**
