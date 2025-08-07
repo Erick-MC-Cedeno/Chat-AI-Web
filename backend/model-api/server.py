@@ -28,8 +28,7 @@ try:
             distinct_responses[int(i)] = r
     with open("data.json", "r", encoding="utf-8") as f:
         data = json.load(f)["conversations"]
-    model = tf.keras.models.load_model("chatbot_model.final.keras")
-
+    model = tf.keras.models.load_model("chatbot_model_final.keras")
     nlp = spacy.load("es_core_news_sm")
     oov_index = tokenizer.word_index.get(OOV_TOKEN, 1)
     print("Recursos cargados exitosamente.")
@@ -121,8 +120,7 @@ def generate_response(user_text):
 app = Flask(__name__)
 # Habilitar CORS para permitir solicitudes desde tu frontend
 # Asegúrate de que la URL de origen sea la correcta para tu frontend
-CORS(app, origins=["http://localhost:3000"])
-
+CORS(app, origins=["https://cautious-doodle-jv4j5754w742p46-3000.app.github.dev"])
 
 @app.route("/chat", methods=["POST"])
 def chat():
