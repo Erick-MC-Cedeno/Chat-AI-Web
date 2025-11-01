@@ -72,11 +72,7 @@ export default function ChatbotUI() {
           <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
         </div>
 
-        {/* Footer info */}
-        <div className="flex-shrink-0 text-center py-4 text-sm text-muted-foreground bg-white/50">
-          <p>Chatbot desarrollado con Next.js, React y TensorFlow</p>
-          <p className="text-xs mt-1">API: localhost/api/model</p>
-        </div>
+        {/* Footer info removed as requested */}
       </div>
     </div>
   )

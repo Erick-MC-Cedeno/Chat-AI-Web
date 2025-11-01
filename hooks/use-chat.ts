@@ -41,13 +41,7 @@ export function useChat() {
     const currentId = ConversationStorage.loadCurrentConversationId()
 
     if (conversations.length === 0) {
-      const newConversation = {
-        id: Date.now().toString(),
-        title: "Nueva conversación",
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
+      const newConversation = ConversationStorage.createNewConversation()
       setState({
         conversations: [newConversation],
         currentConversationId: newConversation.id,
@@ -66,9 +60,8 @@ export function useChat() {
 
   // Guardar conversaciones cuando cambien
   useEffect(() => {
-    if (state.conversations.length > 0) {
-      ConversationStorage.saveConversations(state.conversations)
-    }
+    // Always persist conversations (including empty array) so deletions are saved to localStorage
+    ConversationStorage.saveConversations(state.conversations)
   }, [state.conversations])
 
   // Guardar ID de conversación actual cuando cambie
@@ -158,12 +151,11 @@ export function useChat() {
         if (filteredConversations.length > 0) {
           newCurrentId = filteredConversations[0].id
         } else {
-          // Crear nueva conversación si no queda ninguna
-          const newConversation = ConversationStorage.createNewConversation()
+          // No quedan conversaciones: dejar la lista vacía y currentConversationId en null
           return {
             ...prev,
-            conversations: [newConversation],
-            currentConversationId: newConversation.id,
+            conversations: [],
+            currentConversationId: null,
           }
         }
       }
@@ -191,32 +183,64 @@ export function useChat() {
         return
       }
 
-      const currentConv = getCurrentConversation()
+      let currentConv = getCurrentConversation()
+
+      // If there's no current conversation (e.g., all were deleted), create one
+      let createdHere = false
       if (!currentConv) {
-        return
+        // prepare user and bot placeholder messages
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          content: content.trim(),
+          sender: "user",
+          timestamp: new Date(),
+        }
+
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: "",
+          sender: "bot",
+          timestamp: new Date(),
+        }
+
+        const newConversation = ConversationStorage.createNewConversation(undefined, [userMessage, botMessage])
+        // set new conversation in state so subsequent updates operate on it
+        setState((prev) => ({
+          ...prev,
+          conversations: [newConversation, ...prev.conversations],
+          currentConversationId: newConversation.id,
+        }))
+
+        // update local reference
+        currentConv = newConversation
+        createdHere = true
       }
 
-      // Agregar mensaje del usuario
+      // Agregar mensaje del usuario y un placeholder del bot
       const userMessage: Message = {
         id: Date.now().toString(),
         content: content.trim(),
         sender: "user",
         timestamp: new Date(),
       }
-      
-      // Crear mensaje del bot con estado de carga
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "",
         sender: "bot",
-        timestamp: new Date()
+        timestamp: new Date(),
       }
 
-      // Agregar ambos mensajes a la conversación
-      const updatedMessages = [...currentConv.messages, userMessage, botMessage]
-      updateCurrentConversation({ 
+      // If conversation was just created above, it already contains these messages; otherwise append
+      const updatedMessages = createdHere
+        ? currentConv.messages
+        : (currentConv.messages && currentConv.messages.length > 0
+          ? [...currentConv.messages, userMessage, botMessage]
+          : [userMessage, botMessage])
+
+      updateCurrentConversation({
         messages: updatedMessages,
-        title: currentConv.messages.length === 0 ? content : currentConv.title
+        title: currentConv.messages.length === 0 ? content : currentConv.title,
       })
 
       setLoading(true)

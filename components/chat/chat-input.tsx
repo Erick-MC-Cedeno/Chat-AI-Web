@@ -56,37 +56,36 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
               onKeyPress={handleKeyPress}
               placeholder={isLoading ? "Procesando..." : "Envía un mensaje..."}
               disabled={isLoading}
-              className="w-full py-4 px-4 text-base border-2 border-gray-300 focus:border-gray-400 focus:ring-0 rounded-2xl bg-white shadow-sm transition-all duration-200 placeholder:text-gray-500"
+              className="w-full py-4 pr-14 pl-4 text-base border-2 border-gray-300 focus:border-gray-400 focus:ring-0 rounded-2xl bg-white shadow-sm transition-all duration-200 placeholder:text-gray-500"
             />
+
+            {/* Sparkles hint (when there's text) */}
             {!isLoading && inputValue.trim() && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+              <div className="absolute right-12 top-1/2 -translate-y-1/2">
                 <Sparkles className="h-4 w-4 text-gray-400" />
               </div>
             )}
+
+            {/* Send button placed inside the input on the right */}
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <Button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading}
+                size="sm"
+                aria-label="Enviar mensaje"
+                className="h-9 w-9 rounded-full bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed p-0 flex items-center justify-center transition-all duration-200"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                ) : (
+                  <Send className="h-4 w-4 text-white" />
+                )}
+              </Button>
+            </div>
           </div>
-
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            size="lg"
-            className="h-12 w-12 rounded-full bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200"
-          >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-white" />
-            ) : (
-              <Send className="h-5 w-5 text-white" />
-            )}
-          </Button>
         </div>
 
-        {/* Footer info */}
-        <div className="text-center mt-2">
-          <p className="text-xs text-gray-500">
-            {isLoading
-              ? "Generando respuesta..."
-              : "ChatGPT puede cometer errores. Verifica la información importante."}
-          </p>
-        </div>
+        {/* Footer info removed as requested */}
       </div>
     </div>
   )

@@ -63,7 +63,7 @@ export class ConversationStorage {
     return `Conversación ${new Date().toLocaleDateString()}`
   }
 
-  static createNewConversation(): Conversation {
+  static createNewConversation(title?: string, messages?: Message[]): Conversation {
     const welcomeMessage: Message = {
       id: "welcome",
       content:
@@ -72,10 +72,18 @@ export class ConversationStorage {
       timestamp: new Date(),
     }
 
+    const initialMessages = messages && messages.length > 0 ? messages : [welcomeMessage]
+
+    // If no explicit title provided, try to generate one from provided messages
+    let convTitle = title
+    if (!convTitle) {
+      convTitle = this.generateConversationTitle(initialMessages)
+    }
+
     return {
       id: Date.now().toString(),
-      title: "Nueva conversación",
-      messages: [welcomeMessage],
+      title: convTitle,
+      messages: initialMessages,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
