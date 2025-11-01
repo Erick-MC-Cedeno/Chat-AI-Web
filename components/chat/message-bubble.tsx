@@ -59,16 +59,19 @@ const formatMessage = (content: string) => {
   // para considerar que son un bloque de código.
   const isCodeLine = (line: string) => {
     if (/^\s*$/.test(line)) return false
-    // indentación fuerte
+    const trimmed = line.trim()
+    // indentación fuerte (bloques de código)
     if (/^\s{4,}|^\t/.test(line)) return true
-    // comentarios de código
+    // comentarios de código (python-style)
     if (/^\s*#/.test(line)) return true
-    // signos y patrones típicos
-    if (/[(){}\[\];<>:=]|=>/.test(line)) return true
-    // definiciones/keywords comunes
-    if (/\b(def|class|return|import|from|const|let|var|function|if|else|for|while|try|except)\b/.test(line)) return true
-    // llamadas o expresiones con paréntesis
+    // signos y patrones típicos de código (paréntesis, llaves, corchetes, punto y coma, arrows, asignación)
+    if (/[(){}\[\];<>]|=>|=/.test(line)) return true
+    // definiciones/keywords comunes — exigir palabra completa
+    if (/\b(def|class|return|import|from|const|let|var|function|if|else|for|while|try|except|lambda)\b/.test(line)) return true
+    // llamadas o expresiones con paréntesis (p. ej. func(a, b))
     if (/\w+\s*\([^)]{0,}\)/.test(line)) return true
+    // en Python, una línea que termina con ':' y empieza con una keyword suele indicar un bloque
+    if (/^\s*(def|class|if|for|while|try|except|with)\b.*:\s*$/.test(line)) return true
     return false
   }
 
@@ -202,14 +205,21 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         }`}
       >
         <div className="text-sm leading-relaxed">
-          {formatMessage(message.content).map((part, index) =>
-            part.type === "code" ? (
+          {formatMessage(message.content).map((part, index) => {
+            // Do not render user's own messages as code blocks — show them as plain text
+            if (message.sender === "user") {
+              return (
+                <p key={index} dangerouslySetInnerHTML={{ __html: part.content.replace(/\n/g, "<br />") }} />
+              )
+            }
+
+            return part.type === "code" ? (
               <CodeBlock key={index} code={part.content} />
             ) : (
               // Renderiza el texto, reemplazando saltos de línea con <br />
               <p key={index} dangerouslySetInnerHTML={{ __html: part.content.replace(/\n/g, "<br />") }} />
-            ),
-          )}
+            )
+          })}
         </div>
         <p
           className={`text-xs mt-1 ${
