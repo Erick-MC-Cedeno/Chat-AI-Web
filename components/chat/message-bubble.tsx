@@ -34,35 +34,152 @@ const CodeBlock = ({ code }: { code: string }) => {
 }
 
 const formatMessage = (content: string) => {
-  // Expresión regular para detectar bloques de código Markdown (triple backticks)
+  // 1) Detectar bloques de código fenceados (triple backticks)
   const codeBlockRegex = /```([\s\S]*?)```/g
-  const parts = []
+  const parts: { type: "text" | "code"; content: string }[] = []
   let lastIndex = 0
-  let match
+  let match: RegExpExecArray | null
 
   while ((match = codeBlockRegex.exec(content)) !== null) {
     // Añadir texto antes del bloque de código
     if (match.index > lastIndex) {
-      parts.push({
-        type: "text",
-        content: content.slice(lastIndex, match.index),
-      })
+      parts.push({ type: "text", content: content.slice(lastIndex, match.index) })
     }
-    // Añadir el bloque de código
-    parts.push({
-      type: "code",
-      content: match[1].trim(), // El contenido del bloque de código
-    })
+    // Añadir el bloque de código fenceado
+    parts.push({ type: "code", content: match[1].trim() })
     lastIndex = match.index + match[0].length
   }
   // Añadir el texto restante después del último bloque de código
   if (lastIndex < content.length) {
-    parts.push({
-      type: "text",
-      content: content.slice(lastIndex),
-    })
+    parts.push({ type: "text", content: content.slice(lastIndex) })
   }
-  return parts.length > 0 ? parts : [{ type: "text", content }]
+
+  // Heurística por línea para detectar bloques de código no fenceados sin transformar
+  // texto explicativo en código. Requiere al menos 2 líneas consecutivas "code-like"
+  // para considerar que son un bloque de código.
+  const isCodeLine = (line: string) => {
+    if (/^\s*$/.test(line)) return false
+    // indentación fuerte
+    if (/^\s{4,}|^\t/.test(line)) return true
+    // comentarios de código
+    if (/^\s*#/.test(line)) return true
+    // signos y patrones típicos
+    if (/[(){}\[\];<>:=]|=>/.test(line)) return true
+    // definiciones/keywords comunes
+    if (/\b(def|class|return|import|from|const|let|var|function|if|else|for|while|try|except)\b/.test(line)) return true
+    // llamadas o expresiones con paréntesis
+    if (/\w+\s*\([^)]{0,}\)/.test(line)) return true
+    return false
+  }
+
+  const hasFence = parts.some((p) => p.type === "code")
+  if (!hasFence) {
+    // Si no hay fences, intentar dividir el texto por líneas y localizar grupos de líneas 'code-like'
+    const lines = content.split(/\r?\n/)
+    const groups: { type: "text" | "code"; content: string }[] = []
+    let buffer: string[] = []
+    let bufferIsCode = false
+
+    const pushBuffer = () => {
+      if (buffer.length === 0) return
+      const text = buffer.join("\n")
+      groups.push({ type: bufferIsCode ? "code" : "text", content: bufferIsCode ? text.trim() : text })
+      buffer = []
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      const codey = isCodeLine(line)
+      if (codey) {
+        if (!bufferIsCode) {
+          // cerrar buffer de texto
+          pushBuffer()
+          bufferIsCode = true
+        }
+        buffer.push(line)
+      } else {
+        if (bufferIsCode) {
+          // ver si el buffer de código es suficientemente grande para considerarlo código
+          if (buffer.length >= 2) {
+            pushBuffer()
+          } else {
+            // buffer muy corto: tratarlo como texto (evitar que una línea suelta se marque como código)
+            const recovered = buffer.join("\n")
+            buffer = [recovered, line]
+            bufferIsCode = false
+            continue
+          }
+          bufferIsCode = false
+        }
+        buffer.push(line)
+      }
+    }
+    pushBuffer()
+
+    // Si los grupos detectados tienen código, devolverlos; si no, usar las partes originales
+    const foundCode = groups.some((g) => g.type === "code")
+    if (foundCode) {
+      // compactar grupos adyacentes del mismo tipo
+      const compact: { type: "text" | "code"; content: string }[] = []
+      for (const g of groups) {
+        const last = compact[compact.length - 1]
+        if (last && last.type === g.type) {
+          last.content = `${last.content}\n${g.content}`
+        } else {
+          compact.push({ ...g })
+        }
+      }
+      return compact
+    }
+  }
+
+  // Si llegamos aquí, usamos las partes detectadas por fences y las normalizamos fusión de códigos
+  const normalized: { type: "text" | "code"; content: string }[] = []
+  for (const part of parts) {
+    if (part.type === "code") {
+      normalized.push(part)
+      continue
+    }
+    // si la parte de texto contiene un bloque de líneas que parecen código, intentar dividirla
+    const lines = part.content.split(/\r?\n/)
+    let acc: string[] = []
+    let accIsCode = false
+    for (const line of lines) {
+      const codey = isCodeLine(line)
+      if (codey) {
+        if (!accIsCode) {
+          if (acc.length) normalized.push({ type: "text", content: acc.join("\n") })
+          acc = [line]
+          accIsCode = true
+        } else {
+          acc.push(line)
+        }
+      } else {
+        if (accIsCode) {
+          if (acc.length >= 2) normalized.push({ type: "code", content: acc.join("\n").trim() })
+          else normalized.push({ type: "text", content: acc.join("\n") })
+          acc = [line]
+          accIsCode = false
+        } else {
+          acc.push(line)
+        }
+      }
+    }
+    if (acc.length) normalized.push({ type: accIsCode ? "code" : "text", content: accIsCode ? acc.join("\n").trim() : acc.join("\n") })
+  }
+
+  // Fusionar código adyacente
+  const merged: { type: "text" | "code"; content: string }[] = []
+  for (const part of normalized) {
+    const last = merged[merged.length - 1]
+    if (part.type === "code" && last && last.type === "code") {
+      last.content = `${last.content}\n${part.content}`
+    } else {
+      merged.push({ ...part })
+    }
+  }
+
+  return merged.length > 0 ? merged : [{ type: "text", content }]
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {

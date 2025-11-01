@@ -20,6 +20,8 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
     if (!inputValue.trim() || isLoading) return
     onSendMessage(inputValue)
     setInputValue("")
+    // keep focus in the input after sending so the user can continue typing
+    inputRef.current?.focus()
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -69,6 +71,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
             {/* Send button placed inside the input on the right */}
             <div className="absolute right-2 top-1/2 -translate-y-1/2">
               <Button
+                onMouseDown={(e) => e.preventDefault()} /* prevent button from stealing focus */
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim() || isLoading}
                 size="sm"
