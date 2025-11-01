@@ -9,13 +9,11 @@ interface ConnectionStatusProps {
 
 export function ConnectionStatus({ connectionError }: ConnectionStatusProps) {
   const [isChecking, setIsChecking] = useState(false)
-  const [lastCheck, setLastCheck] = useState<Date | null>(null)
 
   const checkConnection = async () => {
     setIsChecking(true)
     try {
-      const status = await ChatbotAPIService.checkConnection()
-      setLastCheck(new Date())
+  const status = await ChatbotAPIService.checkConnection()
     } catch (error) {
       console.error("Error checking connection:", error)
     } finally {
@@ -40,18 +38,9 @@ export function ConnectionStatus({ connectionError }: ConnectionStatusProps) {
           connectionError ? "bg-red-500" : isChecking ? "bg-yellow-500" : "bg-green-500"
         }`}
       />
-      <span className="text-xs text-muted-foreground">
-        {connectionError
-          ? "Desconectado de GitHub Codespaces"
-          : isChecking
-            ? "Verificando conexión..."
-            : "Conectado a Flask API (GitHub Codespaces)"}
+      <span className="ml-2 text-xl font-bold tracking-wide uppercase text-muted-foreground">
+        Loredo Chatbot
       </span>
-      {lastCheck && (
-        <span className="text-xs text-muted-foreground opacity-60">
-          • Última verificación: {lastCheck.toLocaleTimeString()}
-        </span>
-      )}
     </div>
   )
 }
