@@ -1,95 +1,85 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-export async function POST(request: NextRequest) {
+// Configuración: leer desde variables de entorno para facilitar despliegues
+const FLASK_URL = process.env.FLASK_URL || "http://localhost:4000"
+const FLASK_CHAT_PATH = process.env.FLASK_CHAT_PATH || "/chat"
+const FLASK_TIMEOUT_MS = Number(process.env.FLASK_TIMEOUT_MS) || 10000
+
+type FlaskResponse = { response?: string }
+
+async function callFlask(payload: unknown, timeout = FLASK_TIMEOUT_MS): Promise<FlaskResponse> {
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), timeout)
+
   try {
-    const { prompt } = await request.json()
-
-    if (!prompt || typeof prompt !== "string") {
-      return NextResponse.json({ error: "Prompt is required and must be a string" }, { status: 400 })
-    }
-
-    // Llamar directamente a la API Flask en GitHub Codespaces
-    const flaskResponse = await fetch("http://localhost:4000/chat", {
-
+    const res = await fetch(`${FLASK_URL}${FLASK_CHAT_PATH}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        message: prompt, // Flask espera "message"
-      }),
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
     })
 
-    if (!flaskResponse.ok) {
-      throw new Error(`Flask API error: ${flaskResponse.status} - ${flaskResponse.statusText}`)
+    if (!res.ok) {
+      const text = await res.text().catch(() => "")
+      throw new Error(`Flask API error: ${res.status} ${res.statusText} ${text}`)
     }
 
-    const flaskData = await flaskResponse.json()
-
-    return NextResponse.json({
-      response: flaskData.response,
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error) {
-    console.error("Error in model API:", error)
-
-    // Proporcionar mensajes de error más específicos
-    let errorMessage = "Internal server error"
-
-    if (error instanceof Error) {
-      if (error.message.includes("Flask API error")) {
-        errorMessage = "Error en la API Flask. Verifica que esté ejecutándose correctamente en GitHub Codespaces."
-      } else if (error.message.includes("fetch")) {
-        errorMessage = "No se pudo conectar con la API Flask en GitHub Codespaces"
-      } else {
-        errorMessage = error.message
-      }
-    }
-
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    const data = (await res.json()) as FlaskResponse
+    return data
+  } finally {
+    clearTimeout(id)
   }
 }
 
-// Endpoint adicional para verificar el estado de la conexión con Flask
+function makeErrorResponse(message: string, status = 500) {
+  return NextResponse.json({ error: message, timestamp: new Date().toISOString() }, { status })
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json().catch(() => ({}))
+    const prompt = typeof body.prompt === "string" ? body.prompt : body.message
+
+    if (!prompt || typeof prompt !== "string") {
+      return makeErrorResponse("'prompt' (string) is required", 400)
+    }
+
+    // Forward to Flask and normalize response
+    const flaskData = await callFlask({ message: prompt })
+
+    if (!flaskData || typeof flaskData.response !== "string") {
+      return makeErrorResponse("Invalid response from model server", 502)
+    }
+
+    return NextResponse.json({ response: flaskData.response, timestamp: new Date().toISOString() })
+  } catch (err: any) {
+    console.error("[app/api/model] POST error:", err)
+
+    if (err.name === "AbortError") {
+      return makeErrorResponse("Request to model timed out", 504)
+    }
+
+    if (err.message?.includes("Flask API error")) {
+      return makeErrorResponse("Model server returned an error. Check model logs.", 502)
+    }
+
+    return makeErrorResponse("Internal server error")
+  }
+}
+
+// Simple health check that delegates to the model server.
 export async function GET() {
   try {
-    const flaskResponse = await fetch("http://localhost:4000/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ message: "health check" }),
-    })
+    const flaskData = await callFlask({ message: "health check" }, 5000)
 
-    if (flaskResponse.ok) {
-      const data = await flaskResponse.json()
-      return NextResponse.json({
-        status: "connected",
-        message: "Flask API en GitHub Codespaces está funcionando correctamente",
-        flaskResponse: data.response,
-        timestamp: new Date().toISOString(),
-      })
-    } else {
-      return NextResponse.json(
-        {
-          status: "error",
-          message: `Flask API respondió con error: ${flaskResponse.status}`,
-          timestamp: new Date().toISOString(),
-        },
-        { status: 500 },
-      )
+    if (flaskData && typeof flaskData.response === "string") {
+      return NextResponse.json({ status: "connected", message: "Model server reachable", flaskResponse: flaskData.response, timestamp: new Date().toISOString() })
     }
-  } catch (error) {
-    return NextResponse.json(
-      {
-        status: "disconnected",
-        message: "No se pudo conectar con Flask API en GitHub Codespaces",
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 },
-    )
+
+    return NextResponse.json({ status: "error", message: "Model server returned unexpected payload", timestamp: new Date().toISOString() }, { status: 502 })
+  } catch (err: any) {
+    console.error("[app/api/model] GET health error:", err)
+    const message = err.name === "AbortError" ? "Model server timed out" : err.message || "Unknown error"
+    return NextResponse.json({ status: "disconnected", message, timestamp: new Date().toISOString() }, { status: 500 })
   }
 }

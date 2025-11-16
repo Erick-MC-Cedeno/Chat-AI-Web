@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from "react"
 import type { Message, ChatState, Conversation } from "@/types/chat"
-import { ChatbotAPIService } from "@/lib/services/chatbot-api"
 import { ConversationStorage } from "@/lib/services/conversation-storage"
 
 export function useChat() {
@@ -13,23 +12,39 @@ export function useChat() {
     connectionError: null,
   })
 
+  
+
   // Verificar conexión con la API al montar el hook
   useEffect(() => {
     let isMounted = true
     setConnectionError(null)
-    ChatbotAPIService.checkConnection()
-      .then((result) => {
-        if (isMounted && !result.connected) {
-          setConnectionError("No se pudo conectar con la API Flask")
+
+    const checkInternal = async () => {
+      try {
+        const res = await fetch("/api/model", {
+          method: "GET",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+        })
+
+        if (!isMounted) return
+
+        if (!res.ok) {
+          setConnectionError("No se pudo conectar con el endpoint interno de modelos")
+          return
         }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setConnectionError(
-            typeof err === "string" ? err : err?.message || "Error desconocido al verificar conexión"
-          )
+
+        const data = await res.json()
+        if (!data || data.status !== "connected") {
+          setConnectionError("No se pudo conectar con la API de modelos")
         }
-      })
+      } catch (err: any) {
+        if (!isMounted) return
+        setConnectionError(typeof err === "string" ? err : err?.message || "Error desconocido al verificar conexión")
+      }
+    }
+
+    checkInternal()
+
     return () => {
       isMounted = false
     }
@@ -247,35 +262,42 @@ export function useChat() {
       setConnectionError(null)
 
       try {
-        const response = await ChatbotAPIService.sendMessage(content)
+        const res = await fetch("/api/model", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ prompt: content }),
+        })
 
-        let finalResponse = response
+        if (!res.ok) {
+          throw new Error(`Error en el endpoint interno: ${res.status}`)
+        }
 
-        if (typeof response !== "string" || !response.trim()) {
+        const data = await res.json()
+        let finalResponse = data?.response
+
+        if (typeof finalResponse !== "string" || !finalResponse?.trim()) {
           finalResponse = "Lo siento, no pude procesar tu solicitud. Por favor, intenta nuevamente."
         }
 
         // Actualizar el mensaje del bot con la respuesta
-        const finalMessages = updatedMessages.map(msg => 
-          msg.id === botMessage.id 
-            ? { ...msg, content: finalResponse, isTyping: false }
-            : msg
+        const finalMessages = updatedMessages.map((msg) =>
+          msg.id === botMessage.id ? { ...msg, content: finalResponse, isTyping: false } : msg,
         )
 
         updateCurrentConversation({ messages: finalMessages })
-      } catch (error) {
+      } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : "Error desconocido"
         setConnectionError(`Error de conexión: ${errorMessage}`)
 
         // Actualizar el mensaje del bot con error
-        const errorMessages = updatedMessages.map(msg =>
+        const errorMessages = updatedMessages.map((msg) =>
           msg.id === botMessage.id
             ? {
                 ...msg,
                 content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.",
                 error: true,
               }
-            : msg
+            : msg,
         )
 
         updateCurrentConversation({ messages: errorMessages })

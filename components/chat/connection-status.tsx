@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ChatbotAPIService } from "@/lib/services/chatbot-api"
 
 interface ConnectionStatusProps {
   connectionError: string | null
@@ -13,7 +12,11 @@ export function ConnectionStatus({ connectionError }: ConnectionStatusProps) {
   const checkConnection = async () => {
     setIsChecking(true)
     try {
-  const status = await ChatbotAPIService.checkConnection()
+      const res = await fetch("/api/model", {
+        method: "GET",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+      })
+      const status = res.ok ? await res.json() : { status: "disconnected" }
     } catch (error) {
       console.error("Error checking connection:", error)
     } finally {
