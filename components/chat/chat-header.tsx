@@ -6,7 +6,7 @@ interface ChatHeaderProps {
   connectionError: string | null
   conversations: Conversation[]
   currentConversationId: string | null
-  onNewConversation: () => void
+  onNewConversation: (title?: string) => void
   onSwitchConversation: (id: string) => void
   onDeleteConversation: (id: string) => void
   onUpdateTitle: (id: string, title: string) => void

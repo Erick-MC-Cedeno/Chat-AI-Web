@@ -12,7 +12,8 @@ import type { Conversation } from "@/types/chat"
 interface ConversationSidebarProps {
   conversations: Conversation[]
   currentConversationId: string | null
-  onNewConversation: () => void
+  // Allow passing an optional title when creating a new conversation
+  onNewConversation: (title?: string) => void
   onSwitchConversation: (id: string) => void
   onDeleteConversation: (id: string) => void
   onUpdateTitle: (id: string, title: string) => void
@@ -65,7 +66,7 @@ export function ConversationSidebar({
         <Button variant="ghost" size="icon" onClick={onToggleCollapse} className="h-10 w-10">
           <Menu className="h-5 w-5" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={onNewConversation} className="h-10 w-10">
+        <Button variant="ghost" size="icon" onClick={() => onNewConversation()} className="h-10 w-10">
           <Plus className="h-5 w-5" />
         </Button>
         <div className="flex-1 flex flex-col gap-2 w-full px-2">
@@ -91,7 +92,7 @@ export function ConversationSidebar({
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">Conversaciones</CardTitle>
           <div className="flex gap-1">
-            <Button variant="ghost" size="icon" onClick={onNewConversation} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={() => onNewConversation()} className="h-8 w-8">
               <Plus className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={onToggleCollapse} className="h-8 w-8">

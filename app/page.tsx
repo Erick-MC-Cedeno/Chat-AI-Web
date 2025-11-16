@@ -22,7 +22,8 @@ export default function ChatbotUI() {
     updateConversationTitle,
   } = useChat()
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  // Start the sidebar collapsed so on refresh it stays closed unless the user opens it
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed)

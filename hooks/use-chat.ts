@@ -140,8 +140,8 @@ export function useChat() {
     setState((prev) => ({ ...prev, connectionError: error }))
   }, [])
 
-  const createNewConversation = useCallback(() => {
-    const newConversation = ConversationStorage.createNewConversation()
+  const createNewConversation = useCallback((title?: string) => {
+    const newConversation = ConversationStorage.createNewConversation(title)
     setState((prev) => ({
       ...prev,
       conversations: [newConversation, ...prev.conversations],
@@ -253,9 +253,15 @@ export function useChat() {
           ? [...currentConv.messages, userMessage, botMessage]
           : [userMessage, botMessage])
 
+      // If this conversation didn't have any user messages before, set the title
+      // based on the first user message so the sidebar shows a topic-based name.
+      const hadUserMessageBefore = currentConv.messages.some((m) => m.sender === "user")
+
       updateCurrentConversation({
         messages: updatedMessages,
-        title: currentConv.messages.length === 0 ? content : currentConv.title,
+        title: !hadUserMessageBefore
+          ? ConversationStorage.generateConversationTitle(updatedMessages)
+          : currentConv.title,
       })
 
       setLoading(true)
