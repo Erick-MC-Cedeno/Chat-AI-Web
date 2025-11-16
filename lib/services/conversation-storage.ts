@@ -70,6 +70,9 @@ export class ConversationStorage {
         "¡Hola! Soy tu asistente inteligente. Puedo ayudarte con programación, matemáticas y responder tus preguntas. ¿En qué puedo ayudarte hoy?",
       sender: "bot",
       timestamp: new Date(),
+      // Start as typing so the UI shows the typing indicator when a new
+      // conversation is opened.
+      isTyping: true,
     }
 
     const initialMessages = messages && messages.length > 0 ? messages : [welcomeMessage]

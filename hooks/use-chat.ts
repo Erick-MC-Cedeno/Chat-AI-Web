@@ -1,9 +1,14 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
+import { toast } from "@/hooks/use-toast"
 import type { Message, ChatState, Conversation } from "@/types/chat"
 import { ConversationStorage } from "@/lib/services/conversation-storage"
 
+/**
+ * useChat hook: manages conversations, messages, and TTS playback.
+ * Exposes state and actions: sendMessage, create/switch/delete conversation, and updates.
+ */
 export function useChat() {
   const [state, setState] = useState<ChatState>({
     conversations: [],
@@ -12,317 +17,287 @@ export function useChat() {
     connectionError: null,
   })
 
-  
-
-  // Verificar conexión con la API al montar el hook
   useEffect(() => {
-    let isMounted = true
+    if (typeof window === "undefined" || !window.speechSynthesis) return
+    const synth = window.speechSynthesis
+    const ensure = () => { try { synth.getVoices() } catch { /* ignore */ } }
+    ensure()
+    synth.onvoiceschanged = ensure
+    return () => { try { synth.onvoiceschanged = null } catch { /* ignore */ } }
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
     setConnectionError(null)
-
-    const checkInternal = async () => {
+    ;(async () => {
       try {
-        const res = await fetch("/api/model", {
-          method: "GET",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-        })
-
-        if (!isMounted) return
-
-        if (!res.ok) {
-          setConnectionError("No se pudo conectar con el endpoint interno de modelos")
-          return
-        }
-
-        const data = await res.json()
-        if (!data || data.status !== "connected") {
-          setConnectionError("No se pudo conectar con la API de modelos")
-        }
-      } catch (err: any) {
-        if (!isMounted) return
-        setConnectionError(typeof err === "string" ? err : err?.message || "Error desconocido al verificar conexión")
+        const res = await fetch("/api/model")
+        if (!mounted) return
+        if (!res.ok) return setConnectionError("No se pudo conectar con el endpoint interno de modelos")
+        const data = await res.json().catch(() => null)
+        if (!data || data.status !== "connected") setConnectionError("No se pudo conectar con la API de modelos")
+      } catch (e: any) {
+        if (!mounted) return
+        setConnectionError(typeof e === "string" ? e : e?.message || "Error desconocido al verificar conexión")
       }
-    }
-
-    checkInternal()
-
-    return () => {
-      isMounted = false
-    }
+    })()
+    return () => { mounted = false }
   }, [])
 
-  // Cargar conversaciones al inicializar
   useEffect(() => {
-    const conversations = ConversationStorage.loadConversations()
-    const currentId = ConversationStorage.loadCurrentConversationId()
-
-    if (conversations.length === 0) {
-      const newConversation = ConversationStorage.createNewConversation()
-      setState({
-        conversations: [newConversation],
-        currentConversationId: newConversation.id,
-        isLoading: false,
-        connectionError: null,
-      })
+    const convs = ConversationStorage.loadConversations()
+    const id = ConversationStorage.loadCurrentConversationId()
+    if (convs.length === 0) {
+      const c = ConversationStorage.createNewConversation()
+      setState({ conversations: [c], currentConversationId: c.id, isLoading: false, connectionError: null })
+      // If the created conversation includes a bot welcome message marked as typing,
+      // schedule clearing the typing flag after an estimated duration so the UI
+      // shows the typing indicator first.
+      const welcome = c.messages?.find((m) => m.sender === "bot" && m.isTyping)
+      if (welcome) {
+        try {
+          const final = welcome.content || ""
+          const msPerChar = 25
+          const minMs = 300
+          const maxMs = 3000
+          const est = Math.min(maxMs, Math.max(minMs, final.length * msPerChar))
+          setTimeout(() => {
+            setState((prev) => ({ ...prev, conversations: prev.conversations.map((cv) => cv.id === c.id ? { ...cv, messages: (cv.messages || []).map((m) => m.id === welcome.id ? { ...m, isTyping: false } : m) } : cv) }))
+          }, est)
+        } catch (e) { /* ignore timing errors */ }
+      }
     } else {
-      setState({
-        conversations,
-        currentConversationId: currentId || conversations[0].id,
-        isLoading: false,
-        connectionError: null,
-      })
+      setState({ conversations: convs, currentConversationId: id || convs[0].id, isLoading: false, connectionError: null })
     }
   }, [])
 
-  // Guardar conversaciones cuando cambien
-  useEffect(() => {
-    // Always persist conversations (including empty array) so deletions are saved to localStorage
-    ConversationStorage.saveConversations(state.conversations)
-  }, [state.conversations])
+  useEffect(() => ConversationStorage.saveConversations(state.conversations), [state.conversations])
+  useEffect(() => { if (state.currentConversationId) ConversationStorage.saveCurrentConversationId(state.currentConversationId) }, [state.currentConversationId])
 
-  // Guardar ID de conversación actual cuando cambie
-  useEffect(() => {
-    if (state.currentConversationId) {
-      ConversationStorage.saveCurrentConversationId(state.currentConversationId)
-    }
-  }, [state.currentConversationId])
-
-  const getCurrentConversation = useCallback((): Conversation | null => {
-    return state.conversations.find((conv) => conv.id === state.currentConversationId) || null
-  }, [state.conversations, state.currentConversationId])
+  const getCurrentConversation = useCallback((): Conversation | null => state.conversations.find((c) => c.id === state.currentConversationId) || null, [state.conversations, state.currentConversationId])
 
   const updateCurrentConversation = useCallback((updates: Partial<Conversation>) => {
-    setState((prev) => {
-      const updatedConversations = prev.conversations.map((conv) =>
-        conv.id === prev.currentConversationId
-          ? { ...conv, ...updates, updatedAt: new Date() }
-          : conv
-      )
-      
-      return {
-        ...prev,
-        conversations: updatedConversations,
-      }
-    })
+    setState((prev) => ({ ...prev, conversations: prev.conversations.map((c) => c.id === prev.currentConversationId ? { ...c, ...updates, updatedAt: new Date() } : c) }))
   }, [])
 
-  const addMessage = useCallback(
-    (message: Message) => {
-      const currentConv = getCurrentConversation()
-      if (!currentConv) {
-        return
-      }
-
-      const updatedMessages = [...currentConv.messages, message]
-      updateCurrentConversation({ 
-        messages: updatedMessages,
-        updatedAt: new Date()
-      })
-    },
-    [getCurrentConversation, updateCurrentConversation],
-  )
-
-  const updateMessage = useCallback(
-    (messageId: string, updates: Partial<Message>) => {
-      const currentConv = getCurrentConversation()
-      if (!currentConv) return
-
-      const updatedMessages = currentConv.messages.map((msg) => (msg.id === messageId ? { ...msg, ...updates } : msg))
-      updateCurrentConversation({ messages: updatedMessages })
-    },
-    [getCurrentConversation, updateCurrentConversation],
-  )
-
-  const setLoading = useCallback((isLoading: boolean) => {
-    setState((prev) => ({ ...prev, isLoading }))
-  }, [])
-
-  const setConnectionError = useCallback((error: string | null) => {
-    setState((prev) => ({ ...prev, connectionError: error }))
-  }, [])
+  const setLoading = useCallback((v: boolean) => setState((p) => ({ ...p, isLoading: v })), [])
+  const setConnectionError = useCallback((err: string | null) => setState((p) => ({ ...p, connectionError: err })), [])
 
   const createNewConversation = useCallback((title?: string) => {
-    const newConversation = ConversationStorage.createNewConversation(title)
-    setState((prev) => ({
-      ...prev,
-      conversations: [newConversation, ...prev.conversations],
-      currentConversationId: newConversation.id,
-    }))
-  }, [])
+    const c = ConversationStorage.createNewConversation(title)
+    setState((p) => ({ ...p, conversations: [c, ...p.conversations], currentConversationId: c.id }))
+    // If the created conversation includes a bot welcome message marked as typing,
+    // schedule clearing the typing flag after an estimated duration so the UI
+    // shows the typing indicator first.
+    const welcome = c.messages?.find((m) => m.sender === "bot" && m.isTyping)
+    if (welcome) {
+      try {
+        const final = welcome.content || ""
+        const msPerChar = 25
+        const minMs = 300
+        const maxMs = 3000
+        const est = Math.min(maxMs, Math.max(minMs, final.length * msPerChar))
+        setTimeout(() => {
+          updateCurrentConversation({ messages: (getCurrentConversation()?.messages || []).map((m) => m.id === welcome.id ? { ...m, isTyping: false } : m) })
+        }, est)
+      } catch (e) { /* ignore timing errors */ }
+    }
+  }, [getCurrentConversation, updateCurrentConversation])
 
-  const switchConversation = useCallback((conversationId: string) => {
-    setState((prev) => ({
-      ...prev,
-      currentConversationId: conversationId,
-    }))
-  }, [])
+  const switchConversation = useCallback((id: string) => setState((p) => ({ ...p, currentConversationId: id })), [])
 
-  const deleteConversation = useCallback((conversationId: string) => {
+  const deleteConversation = useCallback((id: string) => {
     setState((prev) => {
-      const filteredConversations = prev.conversations.filter((conv) => conv.id !== conversationId)
-
-      // Si eliminamos la conversación actual, cambiar a otra
-      let newCurrentId = prev.currentConversationId
-      if (prev.currentConversationId === conversationId) {
-        if (filteredConversations.length > 0) {
-          newCurrentId = filteredConversations[0].id
-        } else {
-          // No quedan conversaciones: dejar la lista vacía y currentConversationId en null
-          return {
-            ...prev,
-            conversations: [],
-            currentConversationId: null,
-          }
-        }
+      const filtered = prev.conversations.filter((c) => c.id !== id)
+      if (prev.currentConversationId === id) {
+        if (filtered.length === 0) return { ...prev, conversations: [], currentConversationId: null }
+        return { ...prev, conversations: filtered, currentConversationId: filtered[0].id }
       }
-
-      return {
-        ...prev,
-        conversations: filteredConversations,
-        currentConversationId: newCurrentId,
-      }
+      return { ...prev, conversations: filtered }
     })
   }, [])
 
   const updateConversationTitle = useCallback((conversationId: string, title: string) => {
-    setState((prev) => ({
-      ...prev,
-      conversations: prev.conversations.map((conv) =>
-        conv.id === conversationId ? { ...conv, title, updatedAt: new Date() } : conv,
-      ),
-    }))
+    setState((p) => ({ ...p, conversations: p.conversations.map((c) => c.id === conversationId ? { ...c, title, updatedAt: new Date() } : c) }))
   }, [])
 
-  const sendMessage = useCallback(
-    async (content: string) => {
-      if (!content.trim() || state.isLoading) {
+  /** Ensure voices are available in the browser (returns array of voices). */
+  const ensureVoices = async (): Promise<SpeechSynthesisVoice[]> => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return []
+    const synth = window.speechSynthesis
+    let voices = synth.getVoices() || []
+    if (voices.length === 0) {
+      await new Promise<void>((resolve) => {
+        const onVoices = () => { voices = synth.getVoices() || []; resolve() }
+        synth.onvoiceschanged = onVoices
+        setTimeout(() => resolve(), 500)
+      })
+      voices = synth.getVoices() || []
+    }
+    return voices
+  }
+
+  /** Select the best voice given language and female preference. */
+  const selectVoice = (voices: SpeechSynthesisVoice[], lang?: string, female = false) => {
+    if (!voices || voices.length === 0) return null
+    let voice: SpeechSynthesisVoice | null = null
+    if (lang) voice = voices.find((v) => (v.lang || "").toLowerCase().startsWith(lang.toLowerCase())) || null
+    if (!voice && female) voice = voices.find((v) => /female|woman|frau|mujer/i.test(v.name)) || null
+    if (!voice && lang === "es") voice = voices.find((v) => /(spanish|es|es-)/i.test((v.name || "") + " " + (v.lang || ""))) || null
+    return voice || voices.find((v) => /google|native|alloy/i.test(v.name)) || voices[0] || null
+  }
+
+  /** Play text using browser TTS. */
+  const playBrowserTTS = async (text: string, female = false, lang?: string) => {
+    try {
+      if (typeof window === "undefined" || !window.speechSynthesis) return
+      const synth = window.speechSynthesis
+      const voices = await ensureVoices()
+      const voice = selectVoice(voices, lang, female) || undefined
+      // Lightweight client-side preprocessing: normalize and expand numbers for Spanish
+      const preprocessClient = (t: string, langHint?: string) => {
+        let out = String(t || "").trim()
+        out = out.normalize('NFC')
+        out = out.replace(/\s+/g, ' ')
+        if (!/[.!?…]$/.test(out)) out = out + '.'
+
+        if (langHint && langHint.toLowerCase().startsWith('es')) {
+          // small number to words for client fallback (handles common cases)
+          const units = ["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince","dieciseis","diecisiete","dieciocho","diecinueve","veinte"]
+          const tens = ["","", "veinte", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa"]
+
+          function toWords(n: number): string {
+            if (n <= 20) return units[n]
+            if (n < 100) {
+              const d = Math.floor(n / 10)
+              const u = n % 10
+              return u === 0 ? tens[d] : `${tens[d]} y ${units[u]}`
+            }
+            if (n < 1000) {
+              const c = Math.floor(n / 100)
+              const rest = n % 100
+              const hundreds = ["","ciento","doscientos","trescientos","cuatrocientos","quinientos","seiscientos","setecientos","ochocientos","novecientos"]
+              return rest === 0 ? (c===1? 'cien': hundreds[c]) : `${hundreds[c]} ${toWords(rest)}`
+            }
+            return String(n)
+          }
+
+          out = out.replace(/\b\d{1,12}\b/g, (m) => {
+            try { const n = parseInt(m,10); return isNaN(n) ? m : toWords(n) } catch { return m }
+          })
+          out = out.replace(/\b(\d+)[.,](\d+)\b/g, (_m, w, f) => {
+            if (f.length === 2) return `${toWords(parseInt(w,10))} con ${toWords(parseInt(f.slice(0,2),10))}`
+            return `${toWords(parseInt(w,10))} coma ${f.split('').map((d: string) => ['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve'][parseInt(d,10)]).join(' ')}`
+          })
+        }
+        return out
+      }
+
+      // preprocess for Spanish so browser reads numbers nicely
+      const pre = preprocessClient(text, lang)
+      const utter = new SpeechSynthesisUtterance(pre)
+      if (voice) utter.voice = voice
+      // Use language-specific defaults for Spanish for more natural rhythm
+      utter.lang = lang || 'es-ES'
+      const isEs = Boolean(lang && String(lang).toLowerCase().startsWith("es"))
+      utter.rate = isEs ? 0.95 : 1
+      // Slightly raise pitch for female preference, otherwise slightly lower for adult male timbre
+      utter.pitch = female ? 1.06 : 0.97
+      // Slight volume boost for clarity on some browsers
+      try { (utter as any).volume = 1 } catch { }
+      try { synth.cancel() } catch { }
+      synth.speak(utter)
+    } catch (e) {
+      console.error("Browser TTS error:", e)
+    }
+  }
+
+  /** Try server-side TTS; fall back to browser TTS when necessary. */
+  const playServerTTS = async (text: string, female = false) => {
+    try {
+  // Request server TTS with SSML enabled for Spanish to improve pronunciation
+  const res = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, lang: "es", ssml: true }) })
+      const data = await res.json().catch(() => ({}))
+      if (data?.fallbackToClient) return playBrowserTTS(text, female, "es")
+      if (data?.audioBase64) {
+        const bytes = Uint8Array.from(atob(data.audioBase64), (c) => c.charCodeAt(0))
+        const blob = new Blob([bytes], { type: data.contentType || "audio/mpeg" })
+        try { if (window?.speechSynthesis) window.speechSynthesis.cancel() } catch { }
+        try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { }
+        const audio = new Audio(URL.createObjectURL(blob))
+        await audio.play().catch(() => playBrowserTTS(text, female, "es"))
+        audio.addEventListener("ended", () => { try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { } })
         return
       }
+      toast({ title: "Audio de TTS no disponible", description: "Usando TTS del navegador como alternativa." })
+      return playBrowserTTS(text, female, "es")
+    } catch (e) {
+      console.warn("TTS server error, falling back to browser TTS", e)
+      return playBrowserTTS(text, female, "es")
+    }
+  }
 
-      let currentConv = getCurrentConversation()
+  const sendMessage = useCallback(async (content: string, options?: { capabilities?: { [key: string]: boolean }; ttsFemale?: boolean }) => {
+    if (!content.trim() || state.isLoading) return
+    let conv = getCurrentConversation()
+    let created = false
+    const nowId = Date.now().toString()
+    const userMessage: Message = { id: nowId, content: content.trim(), sender: "user", timestamp: new Date() }
+  const botMessage: Message = { id: (Date.now() + 1).toString(), content: "", sender: "bot", timestamp: new Date(), isTyping: true }
 
-      // If there's no current conversation (e.g., all were deleted), create one
-      let createdHere = false
-      if (!currentConv) {
-        // prepare user and bot placeholder messages
-        const userMessage: Message = {
-          id: Date.now().toString(),
-          content: content.trim(),
-          sender: "user",
-          timestamp: new Date(),
-        }
+    if (!conv) {
+      const c = ConversationStorage.createNewConversation(undefined, [userMessage, botMessage])
+      setState((p) => ({ ...p, conversations: [c, ...p.conversations], currentConversationId: c.id }))
+      conv = c
+      created = true
+    }
 
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: "",
-          sender: "bot",
-          timestamp: new Date(),
-        }
+    const updated = created ? conv.messages : ((conv.messages && conv.messages.length > 0) ? [...conv.messages, userMessage, botMessage] : [userMessage, botMessage])
+    const hadUserBefore = conv.messages.some((m) => m.sender === "user")
+    updateCurrentConversation({ messages: updated, title: !hadUserBefore ? ConversationStorage.generateConversationTitle(updated) : conv.title })
 
-        const newConversation = ConversationStorage.createNewConversation(undefined, [userMessage, botMessage])
-        // set new conversation in state so subsequent updates operate on it
-        setState((prev) => ({
-          ...prev,
-          conversations: [newConversation, ...prev.conversations],
-          currentConversationId: newConversation.id,
-        }))
+    setLoading(true); setConnectionError(null)
+    try {
+      const body: any = { prompt: content }
+      if (options?.capabilities) body.capabilities = options.capabilities
+      if (options?.ttsFemale) body.ttsFemale = true
 
-        // update local reference
-        currentConv = newConversation
-        createdHere = true
-      }
+      const res = await fetch("/api/model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      if (!res.ok) throw new Error(`Error en el endpoint interno: ${res.status}`)
+      const data = await res.json().catch(() => ({}))
+      let final = typeof data?.response === "string" && data.response.trim() ? data.response : "Lo siento, no pude procesar tu solicitud. Por favor, intenta nuevamente."
 
-      // Agregar mensaje del usuario y un placeholder del bot
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        content: content.trim(),
-        sender: "user",
-        timestamp: new Date(),
-      }
+      // Update bot message with final content but keep isTyping=true so the UI
+      // can animate the typewriter effect for new responses. After an estimated
+      // duration based on text length, mark isTyping=false so the message is
+      // persisted as completed and won't re-type on refresh.
+      const finalMessagesTyping = updated.map((m) => m.id === botMessage.id ? { ...m, content: final, isTyping: true } : m)
+      updateCurrentConversation({ messages: finalMessagesTyping })
 
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "",
-        sender: "bot",
-        timestamp: new Date(),
-      }
-
-      // If conversation was just created above, it already contains these messages; otherwise append
-      const updatedMessages = createdHere
-        ? currentConv.messages
-        : (currentConv.messages && currentConv.messages.length > 0
-          ? [...currentConv.messages, userMessage, botMessage]
-          : [userMessage, botMessage])
-
-      // If this conversation didn't have any user messages before, set the title
-      // based on the first user message so the sidebar shows a topic-based name.
-      const hadUserMessageBefore = currentConv.messages.some((m) => m.sender === "user")
-
-      updateCurrentConversation({
-        messages: updatedMessages,
-        title: !hadUserMessageBefore
-          ? ConversationStorage.generateConversationTitle(updatedMessages)
-          : currentConv.title,
-      })
-
-      setLoading(true)
-      setConnectionError(null)
-
+      // Estimate typing duration (ms) based on characters; clamp to reasonable bounds
       try {
-        const res = await fetch("/api/model", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ prompt: content }),
-        })
-
-        if (!res.ok) {
-          throw new Error(`Error en el endpoint interno: ${res.status}`)
-        }
-
-        const data = await res.json()
-        let finalResponse = data?.response
-
-        if (typeof finalResponse !== "string" || !finalResponse?.trim()) {
-          finalResponse = "Lo siento, no pude procesar tu solicitud. Por favor, intenta nuevamente."
-        }
-
-        // Actualizar el mensaje del bot con la respuesta
-        const finalMessages = updatedMessages.map((msg) =>
-          msg.id === botMessage.id ? { ...msg, content: finalResponse, isTyping: false } : msg,
-        )
-
-        updateCurrentConversation({ messages: finalMessages })
-      } catch (error: any) {
-        const errorMessage = error instanceof Error ? error.message : "Error desconocido"
-        setConnectionError(`Error de conexión: ${errorMessage}`)
-
-        // Actualizar el mensaje del bot con error
-        const errorMessages = updatedMessages.map((msg) =>
-          msg.id === botMessage.id
-            ? {
-                ...msg,
-                content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.",
-                error: true,
-              }
-            : msg,
-        )
-
-        updateCurrentConversation({ messages: errorMessages })
-      } finally {
-        setLoading(false)
+        const msPerChar = 25
+        const minMs = 300
+        const maxMs = 5000
+        const est = Math.min(maxMs, Math.max(minMs, final.length * msPerChar))
+        setTimeout(() => {
+          const finalMessagesDone = finalMessagesTyping.map((m) => m.id === botMessage.id ? { ...m, isTyping: false } : m)
+          updateCurrentConversation({ messages: finalMessagesDone })
+        }, est)
+      } catch (e) {
+        // fallback: immediately clear typing flag
+        const finalMessagesDone = finalMessagesTyping.map((m) => m.id === botMessage.id ? { ...m, isTyping: false } : m)
+        updateCurrentConversation({ messages: finalMessagesDone })
       }
-    },
-    [state.isLoading, getCurrentConversation, updateCurrentConversation, setLoading, setConnectionError],
-  )
+
+      if (options?.ttsFemale && typeof window !== "undefined") await playServerTTS(final, !!options.ttsFemale)
+    } catch (err: any) {
+      setConnectionError(`Error de conexión: ${err instanceof Error ? err.message : String(err)}`)
+      const errorMessages = (getCurrentConversation()?.messages || []).map((m) => m.id === botMessage.id ? { ...m, content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.", error: true } : m)
+      updateCurrentConversation({ messages: errorMessages })
+    } finally { setLoading(false) }
+  }, [state.isLoading, getCurrentConversation, updateCurrentConversation, setLoading, setConnectionError])
 
   const currentConversation = getCurrentConversation()
-
-  return {
-    ...state,
-    currentConversation,
-    sendMessage,
-    createNewConversation,
-    switchConversation,
-    deleteConversation,
-    updateConversationTitle,
-  }
+  return { ...state, currentConversation, sendMessage, createNewConversation, switchConversation, deleteConversation, updateConversationTitle }
 }

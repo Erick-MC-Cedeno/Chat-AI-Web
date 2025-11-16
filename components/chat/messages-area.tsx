@@ -53,9 +53,19 @@ export function MessagesArea({ messages }: MessagesAreaProps) {
         setTypingText("")
         return
       }
-      setDelayedMessages(messages.slice(0, -1))
-      setTypingMessage(messages[messages.length - 1])
-      setTypingText("")
+      const last = messages[messages.length - 1]
+      // Only animate typing for the last message if it should be typing
+      // (either explicitly flagged with isTyping or it's an empty bot placeholder).
+      if (last && last.sender === "bot" && (last.isTyping === true || last.content === "")) {
+        setDelayedMessages(messages.slice(0, -1))
+        setTypingMessage(last)
+        setTypingText("")
+      } else {
+        // No typing animation: show all messages immediately
+        setDelayedMessages(messages)
+        setTypingMessage(null)
+        setTypingText("")
+      }
     }
 
     showMessages()
@@ -68,17 +78,23 @@ export function MessagesArea({ messages }: MessagesAreaProps) {
     if (!typingMessage) return
     let isMounted = true
     let charIndex = 0
+    // Use Array.from to iterate by user-perceived characters (grapheme clusters)
+    // so we don't split surrogate pairs or combined characters (emojis, accented glyphs).
+    const chars = Array.from(typingMessage.content || "")
+
     const typeChar = () => {
-      if (!isMounted || !typingMessage) return
-      setTypingText(typingMessage.content.slice(0, charIndex + 1))
+      if (!isMounted) return
+      setTypingText(chars.slice(0, charIndex + 1).join(""))
       charIndex++
 
-      if (charIndex < typingMessage.content.length) {
+      if (charIndex < chars.length) {
+        // small delay to make the typing effect readable but still fast
         requestAnimationFrame(() => setTimeout(typeChar, 1))
       }
     }
 
     typeChar()
+
     return () => {
       isMounted = false
     }

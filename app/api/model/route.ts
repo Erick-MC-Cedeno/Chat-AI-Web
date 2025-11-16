@@ -37,15 +37,23 @@ function makeErrorResponse(message: string, status = 500) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}))
-    const prompt = typeof body.prompt === "string" ? body.prompt : body.message
+  const body = await request.json().catch(() => ({}))
+  const prompt = typeof body.prompt === "string" ? body.prompt : body.message
+  // Extract optional flags forwarded from client
+  const capabilities = body.capabilities
+  const ttsFemale = body.ttsFemale
 
     if (!prompt || typeof prompt !== "string") {
       return makeErrorResponse("'prompt' (string) is required", 400)
     }
 
     // Forward to Flask and normalize response
-    const flaskData = await callFlask({ message: prompt })
+  // Forward optional metadata to the Flask model server so it can adapt behavior
+  const flaskPayload: any = { message: prompt }
+  if (capabilities) flaskPayload.capabilities = capabilities
+  if (ttsFemale) flaskPayload.ttsFemale = true
+
+  const flaskData = await callFlask(flaskPayload)
 
     if (!flaskData || typeof flaskData.response !== "string") {
       return makeErrorResponse("Invalid response from model server", 502)

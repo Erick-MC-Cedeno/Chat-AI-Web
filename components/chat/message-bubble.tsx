@@ -9,6 +9,15 @@ interface MessageBubbleProps {
   message: Message
 }
 
+const escapeHtml = (unsafe: string) => {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
 const CodeBlock = ({ code }: { code: string }) => {
   const [copied, setCopied] = useState(false)
 
@@ -16,6 +25,15 @@ const CodeBlock = ({ code }: { code: string }) => {
     await navigator.clipboard.writeText(code)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const escapeHtml = (unsafe: string) => {
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
   }
 
   return (
@@ -205,21 +223,28 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         }`}
       >
         <div className="text-sm leading-relaxed">
-          {formatMessage(message.content).map((part, index) => {
-            // Do not render user's own messages as code blocks — show them as plain text
-            if (message.sender === "user") {
-              return (
-                <p key={index} dangerouslySetInnerHTML={{ __html: part.content.replace(/\n/g, "<br />") }} />
-              )
-            }
+          {message.isTyping ? (
+            // Durante la animación de tipeo, mostrar el contenido incremental
+            // como texto plano (sin formatear bloques de código) para asegurar
+            // que TODO el texto se presente gradualmente hasta que isTyping=false.
+            <p className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: escapeHtml(message.content).replace(/\n/g, "<br />") }} />
+          ) : (
+            formatMessage(message.content).map((part, index) => {
+              // Do not render user's own messages as code blocks — show them as plain text
+              if (message.sender === "user") {
+                return (
+                  <p key={index} dangerouslySetInnerHTML={{ __html: escapeHtml(part.content).replace(/\n/g, "<br />") }} />
+                )
+              }
 
-            return part.type === "code" ? (
-              <CodeBlock key={index} code={part.content} />
-            ) : (
-              // Renderiza el texto, reemplazando saltos de línea con <br />
-              <p key={index} dangerouslySetInnerHTML={{ __html: part.content.replace(/\n/g, "<br />") }} />
-            )
-          })}
+              return part.type === "code" ? (
+                <CodeBlock key={index} code={part.content} />
+              ) : (
+                // Renderiza el texto, reemplazando saltos de línea con <br />
+                <p key={index} dangerouslySetInnerHTML={{ __html: escapeHtml(part.content).replace(/\n/g, "<br />") }} />
+              )
+            })
+          )}
         </div>
         <p
           className={`text-xs mt-1 ${

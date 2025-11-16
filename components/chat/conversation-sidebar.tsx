@@ -87,7 +87,7 @@ export function ConversationSidebar({
   }
 
   return (
-  <Card className="w-80 h-full border-0 border-r border-border rounded-none bg-sidebar/90 backdrop-blur-sm flex flex-col">
+  <Card className="w-80 h-full min-h-0 border-0 border-r border-border rounded-none bg-sidebar/90 backdrop-blur-sm flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">Conversaciones</CardTitle>
@@ -102,13 +102,13 @@ export function ConversationSidebar({
         </div>
       </CardHeader>
 
-      <CardContent className="p-0 flex-1 flex flex-col">
-        <ScrollArea className="flex-1">
-          <div className="space-y-1 p-3">
+      <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-2 divide-y divide-border/30">
             {conversations.map(conversation => (
               <div
                 key={conversation.id}
-                className={`group relative rounded-lg p-3 cursor-pointer transition-colors flex flex-col ${
+                className={`group relative rounded-md py-3 px-2 cursor-pointer transition-colors flex flex-col ${
                   conversation.id === currentConversationId
                     ? "bg-sidebar-primary/30 border border-sidebar-border"
                     : "hover:bg-popover/80"

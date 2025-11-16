@@ -1,14 +1,14 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, Loader2, Sparkles, Mic, MicOff } from "lucide-react"
 import { QuickActions } from "./quick-actions"
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void
+  onSendMessage: (message: string, options?: { capabilities?: { [key: string]: boolean }; ttsFemale?: boolean }) => void
   isLoading: boolean
 }
 
@@ -16,14 +16,21 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   const [inputValue, setInputValue] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isSpeechSupported, setIsSpeechSupported] = useState(true)
+  // Use stable defaults during SSR to avoid hydration mismatches. We'll restore
+  // persisted values on mount (client-side) in a useEffect below.
+  const [capabilityStates, setCapabilityStates] = useState<{ [key: string]: boolean }>({ Programación: false, Matemáticas: false })
+  const [ttsFemale, setTtsFemale] = useState<boolean>(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
   const isRecordingRef = useRef(false)
   const lastFinalRef = useRef<{ text: string; time: number }>({ text: "", time: 0 })
+  // Persist user preference for voice mode in localStorage ("true" / "false").
+  // Initialize to false (stable for SSR) and restore on mount.
+  const [voiceMode, setVoiceMode] = useState<boolean>(false)
 
   const handleSendMessage = () => {
     if (!inputValue.trim() || isLoading) return
-    onSendMessage(inputValue)
+    onSendMessage(inputValue, { capabilities: capabilityStates, ttsFemale })
     setInputValue("")
     // keep focus in the input after sending so the user can continue typing
     inputRef.current?.focus()
@@ -41,6 +48,26 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
       setInputValue(text)
       inputRef.current?.focus()
     }
+  }
+
+  const handleToggleCapability = (label: string) => {
+    setCapabilityStates((prev) => {
+      const next = { ...prev, [label]: !prev[label] }
+      try {
+        localStorage.setItem("capabilityStates", JSON.stringify(next))
+      } catch (e) {}
+      return next
+    })
+  }
+
+  const handleToggleTts = () => {
+    setTtsFemale((v) => {
+      const next = !v
+      try {
+        localStorage.setItem("ttsFemale", next ? "true" : "false")
+      } catch (e) {}
+      return next
+    })
   }
 
   // Initialize SpeechRecognition (Web Speech API) if available
@@ -129,7 +156,16 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
     }
 
     recognition.onerror = (e: any) => {
-      console.error("Speech recognition error", e)
+      try {
+        // Avoid passing the full event object to console.error because in
+        // Next.js dev mode it may be treated as an unhandled error overlay.
+        const errName = e?.error || (e?.message ? e.message : "unknown")
+        console.warn("Speech recognition error:", errName)
+      } catch (err) {
+        // Swallow any logging errors
+        console.warn("Speech recognition error (unknown)")
+      }
+
       // If permission denied or service not allowed, stop and disable speech support
       if (e?.error === "not-allowed" || e?.error === "service-not-allowed") {
         isRecordingRef.current = false
@@ -148,7 +184,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
           initRecognition()
           recognitionRef.current?.start()
         } catch (e) {
-          console.error("Failed to restart recognition", e)
+          console.warn("Failed to restart recognition", e)
           isRecordingRef.current = false
           setIsRecording(false)
         }
@@ -171,8 +207,17 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
       isRecordingRef.current = true
       // focus input so caret is visible and user can still edit
       inputRef.current?.focus()
+      // Persist user preference: they enabled voice mode by starting recording
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("voiceMode", "true")
+        }
+      } catch (e) {
+        /* ignore localStorage errors */
+      }
+      setVoiceMode(true)
     } catch (e) {
-      console.error("Failed to start recognition", e)
+      console.warn("Failed to start recognition", e)
       setIsRecording(false)
       isRecordingRef.current = false
     }
@@ -189,7 +234,66 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
     setIsRecording(false)
     isRecordingRef.current = false
     inputRef.current?.focus()
+    // Persist user preference: they disabled voice mode by stopping recording
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("voiceMode", "false")
+      }
+    } catch (e) {
+      /* ignore localStorage errors */
+    }
+    setVoiceMode(false)
   }
+
+  // Keep local state and localStorage in sync if storage is changed elsewhere
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key) return
+      try {
+        if (e.key === "voiceMode") setVoiceMode(e.newValue === "true")
+        if (e.key === "ttsFemale") setTtsFemale(e.newValue === "true")
+        if (e.key === "capabilityStates") setCapabilityStates(e.newValue ? JSON.parse(e.newValue) : { Programación: false, Matemáticas: false })
+      } catch (err) {
+        // ignore
+      }
+    }
+    try {
+      window?.addEventListener?.("storage", onStorage)
+    } catch (e) {}
+    return () => {
+      try {
+        window?.removeEventListener?.("storage", onStorage)
+      } catch (e) {}
+    }
+  }, [])
+
+  // On mount, restore persisted preferences from localStorage. Doing this in
+  // useEffect ensures the initial server-render matches the client and avoids
+  // hydration mismatches.
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return
+      const v = localStorage.getItem("voiceMode")
+      const tts = localStorage.getItem("ttsFemale")
+      const caps = localStorage.getItem("capabilityStates")
+
+      if (v === "true") setVoiceMode(true)
+      else if (v === "false") setVoiceMode(false)
+
+      if (tts === "true") setTtsFemale(true)
+      else if (tts === "false") setTtsFemale(false)
+
+      if (caps) {
+        try {
+          setCapabilityStates(JSON.parse(caps))
+        } catch (e) {
+          // ignore parse errors
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [])
 
   return (
   <div className="border-t bg-popover/80 backdrop-blur-sm border-border">
@@ -197,7 +301,14 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
         {/* Quick Actions - solo cuando no hay texto */}
         {!inputValue && (
           <div className="mb-3">
-            <QuickActions onActionClick={handleQuickAction} disabled={isLoading} />
+            <QuickActions
+              onActionClick={handleQuickAction}
+              disabled={isLoading}
+              capabilityStates={capabilityStates}
+              onToggleCapability={handleToggleCapability}
+              ttsFemale={ttsFemale}
+              onToggleTts={handleToggleTts}
+            />
           </div>
         )}
 
@@ -230,15 +341,33 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
                 size="sm"
                 aria-label={isRecording ? "Detener grabación" : "Iniciar grabación"}
                 variant={isRecording ? undefined : undefined}
-                className={`h-9 w-9 rounded-full ${isRecording ? "bg-red-500/90 hover:bg-red-500" : "bg-secondary/80 hover:bg-secondary/90"} disabled:bg-muted p-0 flex items-center justify-center transition-all duration-200`}
-                title={isSpeechSupported ? (isRecording ? "Detener" : "Grabar voz") : "Reconocimiento de voz no soportado en este navegador"}
+                className={`relative h-9 w-9 rounded-full p-0 flex items-center justify-center transition-all duration-200 disabled:bg-muted ${
+                  isRecording
+                    ? "bg-red-500/90 hover:bg-red-500"
+                    : voiceMode
+                      ? "bg-secondary/80 hover:bg-secondary/90 ring-2 ring-primary/40"
+                      : "bg-secondary/80 hover:bg-secondary/90"
+                }`}
+                title={isSpeechSupported ? (isRecording ? "Detener" : voiceMode ? "Modo voz recordado — haz click para iniciar" : "Grabar voz") : "Reconocimiento de voz no soportado en este navegador"}
               >
                 {isRecording ? (
                   <MicOff className="h-4 w-4 text-white" />
                 ) : (
-                  <Mic className="h-4 w-4 text-primary-foreground" />
+                  <>
+                    <Mic className="h-4 w-4 text-primary-foreground" />
+                    {/* Small persisted mode indicator dot when voiceMode is enabled but not actively recording */}
+                    {voiceMode && !isRecording && (
+                      <span className="absolute -right-0.5 -top-0.5 block h-2 w-2 rounded-full bg-primary-600 ring-1 ring-white" aria-hidden />
+                    )}
+                  </>
                 )}
               </Button>
+              {/* Voice mode badge */}
+              <span className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium select-none ${
+                voiceMode ? "bg-green-100 text-green-800" : "bg-muted/10 text-muted-foreground"
+              }`}>
+                Voz: {voiceMode ? "On" : "Off"}
+              </span>
 
               <Button
                 onMouseDown={(e) => e.preventDefault()} /* prevent button from stealing focus */
