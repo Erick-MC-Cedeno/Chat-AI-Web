@@ -61,7 +61,7 @@ export function ConversationSidebar({
   // Collapsed view
   if (isCollapsed) {
     return (
-      <div className="w-16 bg-white/90 backdrop-blur-sm border-r border-gray-200 flex flex-col items-center py-4 gap-4">
+  <div className="w-16 bg-sidebar/90 backdrop-blur-sm border-r border-border flex flex-col items-center py-4 gap-4">
         <Button variant="ghost" size="icon" onClick={onToggleCollapse} className="h-10 w-10">
           <Menu className="h-5 w-5" />
         </Button>
@@ -86,7 +86,7 @@ export function ConversationSidebar({
   }
 
   return (
-    <Card className="w-80 h-full border-0 border-r border-gray-200 rounded-none bg-white/90 backdrop-blur-sm flex flex-col">
+  <Card className="w-80 h-full border-0 border-r border-border rounded-none bg-sidebar/90 backdrop-blur-sm flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">Conversaciones</CardTitle>
@@ -109,8 +109,8 @@ export function ConversationSidebar({
                 key={conversation.id}
                 className={`group relative rounded-lg p-3 cursor-pointer transition-colors flex flex-col ${
                   conversation.id === currentConversationId
-                    ? "bg-blue-50 border border-blue-200"
-                    : "hover:bg-gray-50"
+                    ? "bg-sidebar-primary/30 border border-sidebar-border"
+                    : "hover:bg-popover/80"
                 }`}
                 onClick={() => onSwitchConversation(conversation.id)}
               >

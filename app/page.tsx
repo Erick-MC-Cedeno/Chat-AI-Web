@@ -29,7 +29,7 @@ export default function ChatbotUI() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex">
+  <div className="h-screen bg-background text-foreground flex">
       {/* Sidebar - Hidden on mobile, shown on desktop */}
       <div className="hidden md:block">
         <ConversationSidebar

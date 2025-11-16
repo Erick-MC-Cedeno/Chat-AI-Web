@@ -39,7 +39,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   }
 
   return (
-    <div className="border-t bg-white/80 backdrop-blur-sm">
+  <div className="border-t bg-popover/80 backdrop-blur-sm border-border">
       <div className="max-w-4xl mx-auto px-4 py-4">
         {/* Quick Actions - solo cuando no hay texto */}
         {!inputValue && (
@@ -58,14 +58,14 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
               onKeyPress={handleKeyPress}
               placeholder={isLoading ? "Procesando..." : "Envía un mensaje..."}
               disabled={isLoading}
-              className="w-full py-4 pr-14 pl-4 text-base border-2 border-gray-300 focus:border-gray-400 focus:ring-0 rounded-2xl bg-white shadow-sm transition-all duration-200 placeholder:text-gray-500"
+              className="w-full py-4 pr-14 pl-4 text-base border-2 border-border focus:border-primary focus:ring-0 rounded-2xl bg-card shadow-sm transition-all duration-200 placeholder:text-muted-foreground"
             />
 
             {/* Sparkles hint (when there's text) */}
             {!isLoading && inputValue.trim() && (
               <div className="absolute right-12 top-1/2 -translate-y-1/2">
-                <Sparkles className="h-4 w-4 text-gray-400" />
-              </div>
+                  <Sparkles className="h-4 w-4 text-muted-foreground" />
+                </div>
             )}
 
             {/* Send button placed inside the input on the right */}
@@ -76,12 +76,12 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
                 disabled={!inputValue.trim() || isLoading}
                 size="sm"
                 aria-label="Enviar mensaje"
-                className="h-9 w-9 rounded-full bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed p-0 flex items-center justify-center transition-all duration-200"
+                className="h-9 w-9 rounded-full bg-primary hover:bg-primary/80 disabled:bg-muted disabled:cursor-not-allowed p-0 flex items-center justify-center transition-all duration-200"
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                  <Loader2 className="h-4 w-4 animate-spin text-primary-foreground" />
                 ) : (
-                  <Send className="h-4 w-4 text-white" />
+                  <Send className="h-4 w-4 text-primary-foreground" />
                 )}
               </Button>
             </div>

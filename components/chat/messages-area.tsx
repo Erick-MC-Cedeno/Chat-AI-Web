@@ -94,11 +94,11 @@ export function MessagesArea({ messages }: MessagesAreaProps) {
         <div className="space-y-6 py-6">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-96 text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6">
-                <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full" />
+              <div className="w-16 h-16 bg-gradient-to-br from-popover/80 to-card/80 rounded-full flex items-center justify-center mb-6">
+                <div className="w-8 h-8 bg-gradient-to-br from-muted to-popover rounded-full" />
               </div>
-              <h3 className="text-2xl font-semibold text-gray-800 mb-3">¿En qué puedo ayudarte hoy?</h3>
-              <p className="text-gray-600 max-w-md leading-relaxed">
+              <h3 className="text-2xl font-semibold text-foreground mb-3">¿En qué puedo ayudarte hoy?</h3>
+              <p className="text-muted-foreground max-w-md leading-relaxed">
                 Puedes preguntarme sobre programación, matemáticas, escribir código, resolver problemas o cualquier tema
                 que necesites.
               </p>

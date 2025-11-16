@@ -19,15 +19,15 @@ const CodeBlock = ({ code }: { code: string }) => {
   }
 
   return (
-    <div className="relative mt-2 rounded-lg bg-gray-900 p-4">
+    <div className="relative mt-2 rounded-lg bg-input p-4">
       <button
         onClick={copyToClipboard}
-        className="absolute right-2 top-2 rounded-lg p-2 text-gray-400 hover:bg-gray-700 hover:text-white"
+        className="absolute right-2 top-2 rounded-lg p-2 text-muted-foreground hover:bg-popover hover:text-foreground"
       >
         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
       </button>
       <pre className="overflow-x-auto">
-        <code className="text-sm text-white">{code}</code>
+        <code className="text-sm text-foreground">{code}</code>
       </pre>
     </div>
   )
@@ -64,13 +64,13 @@ const formatMessage = (content: string) => {
     if (/^\s{4,}|^\t/.test(line)) return true
     // comentarios de código (python-style)
     if (/^\s*#/.test(line)) return true
-    // signos y patrones típicos de código (paréntesis, llaves, corchetes, punto y coma, arrows, asignación)
-    if (/[(){}\[\];<>]|=>|=/.test(line)) return true
-    // definiciones/keywords comunes — exigir palabra completa
-    if (/\b(def|class|return|import|from|const|let|var|function|if|else|for|while|try|except|lambda)\b/.test(line)) return true
-    // llamadas o expresiones con paréntesis (p. ej. func(a, b))
-    if (/\w+\s*\([^)]{0,}\)/.test(line)) return true
-    // en Python, una línea que termina con ':' y empieza con una keyword suele indicar un bloque
+    // patrones de código más confiables: punto y coma, llaves, corchetes, arrows, retorno o asignaciones con operadores típicos
+    if (/[{}\[\];<>]|=>|->/.test(line)) return true
+    // asignaciones o returns: require operator with identifier on left (e.g. x =, const x =, return )
+    if (/\b(return|throw)\b/.test(line)) return true
+    if (/\b(const|let|var|def|function|class)\b/.test(line)) return true
+    if (/\w+\s*=\s*[^\s].+/.test(line)) return true
+    // líneas que acaban en ':' tras una keyword (python) — típico de bloques
     if (/^\s*(def|class|if|for|while|try|except|with)\b.*:\s*$/.test(line)) return true
     return false
   }
@@ -191,17 +191,17 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       {message.sender === "bot" && (
         <Avatar className={`h-8 w-8 ${message.error ? "bg-red-500" : "bg-gradient-to-r from-blue-500 to-purple-600"}`}>
           <AvatarFallback>
-            {message.error ? <AlertCircle className="h-4 w-4 text-white" /> : <Bot className="h-4 w-4 text-white" />}
+            {message.error ? <AlertCircle className="h-4 w-4 text-destructive-foreground" /> : <Bot className="h-4 w-4 text-primary-foreground" />}
           </AvatarFallback>
         </Avatar>
       )}
       <div
         className={`max-w-[80%] rounded-2xl px-4 py-3 ${
           message.sender === "user"
-            ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+            ? "bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground"
             : message.error
-              ? "bg-red-100 text-red-900 border border-red-200"
-              : "bg-gray-100 text-gray-900"
+              ? "bg-destructive/10 text-destructive-foreground border border-destructive/30"
+              : "bg-card text-card-foreground"
         }`}
       >
         <div className="text-sm leading-relaxed">
@@ -223,7 +223,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
         <p
           className={`text-xs mt-1 ${
-            message.sender === "user" ? "text-blue-100" : message.error ? "text-red-600" : "text-gray-500"
+            message.sender === "user" ? "text-primary-foreground" : message.error ? "text-destructive-foreground" : "text-muted-foreground"
           }`}
         >
           {message.timestamp.toLocaleTimeString([], {
@@ -235,7 +235,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       {message.sender === "user" && (
         <Avatar className="h-8 w-8 bg-gradient-to-r from-green-500 to-blue-500">
           <AvatarFallback>
-            <User className="h-4 w-4 text-white" />
+            <User className="h-4 w-4 text-primary-foreground" />
           </AvatarFallback>
         </Avatar>
       )}

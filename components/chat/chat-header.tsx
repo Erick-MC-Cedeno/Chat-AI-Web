@@ -22,7 +22,7 @@ export function ChatHeader({
   onUpdateTitle,
 }: ChatHeaderProps) {
   return (
-    <div className="flex items-center justify-between py-4 px-4 bg-white/80 backdrop-blur-sm border-b">
+  <div className="flex items-center justify-between py-4 px-4 bg-popover/80 backdrop-blur-sm border-b border-border">
       {/* Mobile sidebar toggle */}
       <MobileSidebarToggle
         conversations={conversations}
