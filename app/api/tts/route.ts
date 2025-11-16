@@ -104,12 +104,41 @@ export async function POST(request: Request) {
           return out
         }
 
-        const spokenEscaped = escapeXml(preprocessedWithNumbers)
-        const spokenWithBreaks = insertBreaks(spokenEscaped)
+  const spokenEscaped = escapeXml(preprocessedWithNumbers)
+  let spokenWithBreaks = insertBreaks(spokenEscaped)
 
         const len = preprocessedWithNumbers.length
-        const rate = len < 80 ? '95%' : (len < 240 ? '98%' : '100%')
-        const pitch = '+0st'
+
+        // Allow simple style/preset selection: 'natural' or 'robotic'. Also permit explicit overrides.
+        const preset = ((body.preset || body.style) && String(body.preset || body.style).toLowerCase()) || 'default'
+
+        // base values depending on length (keep original sensible defaults)
+        let rate = len < 80 ? '95%' : (len < 240 ? '98%' : '100%')
+        let pitch = '+0st'
+
+        if (preset === 'natural') {
+          // Slightly slower and warmer pitch for a more natural-sounding delivery
+          rate = len < 80 ? '92%' : (len < 240 ? '96%' : '98%')
+          pitch = '+2st'
+        } else if (preset === 'robotic') {
+          // Flatter/more monotone pitch and steady rate to sound more "robotic"
+          rate = '98%'
+          pitch = '-3st'
+
+          // For robotic style, shorten intra-sentence breaks a bit to make delivery choppier
+          const insertRobotBreaks = (s: string) => {
+            let out = s.replace(/,\s*/g, ', <break time="100ms"/> ')
+            out = out.replace(/[;—–-]\s*/g, '<break time="140ms"/> ')
+            out = out.replace(/([.!?…])\s*/g, '$1 <break time="220ms"/> ')
+            return out
+          }
+          // replace the previously computed spokenWithBreaks for robotic preset
+          spokenWithBreaks = insertRobotBreaks(spokenEscaped)
+        }
+
+        // Allow explicit overrides from the request body (useful for quick tuning)
+        if (body.rate && typeof body.rate === 'string') rate = body.rate
+        if (body.pitch && typeof body.pitch === 'string') pitch = body.pitch
 
         const ssml = `<speak><lang xml:lang="es-ES"><prosody rate="${rate}" pitch="${pitch}">${spokenWithBreaks}</prosody></lang></speak>`
         payload.ssml = ssml
