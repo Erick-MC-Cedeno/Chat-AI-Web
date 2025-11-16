@@ -1,7 +1,7 @@
 // Configuración centralizada de la API
 export const API_CONFIG = {
   // URL de la API Flask en GitHub Codespaces
-  FLASK_URL: "https://fluffy-disco-45gj7v7gg44f594-8000.app.github.dev",
+  FLASK_URL: "http://localhost:4000",
 
   ENDPOINTS: {
     CHAT: "/chat",

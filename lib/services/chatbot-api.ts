@@ -1,7 +1,7 @@
 export class ChatbotAPIService {
   // Configuración de la API Flask en GitHub Codespaces
   // Considera usar una variable de entorno para FLASK_API_URL en un entorno de producción.
-  private static readonly FLASK_API_URL = "https://fluffy-disco-45gj7v7gg44f594-8000.app.github.dev"
+  private static readonly FLASK_API_URL = "http://localhost:4000"
 
   private static readonly CHAT_ENDPOINT = "/chat"
 
