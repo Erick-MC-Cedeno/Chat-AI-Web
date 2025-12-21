@@ -97,8 +97,19 @@ export function useChat() {
         const minMs = 300
         const maxMs = 3000
         const est = Math.min(maxMs, Math.max(minMs, final.length * msPerChar))
+        // Use setState and directly target the newly created conversation by id.
+        // Avoid using getCurrentConversation here because closures can capture
+        // stale state and cause the messages from the previous conversation to
+        // be copied into the new one.
         setTimeout(() => {
-          updateCurrentConversation({ messages: (getCurrentConversation()?.messages || []).map((m) => m.id === welcome.id ? { ...m, isTyping: false } : m) })
+          setState((prev) => ({
+            ...prev,
+            conversations: prev.conversations.map((cv) =>
+              cv.id === c.id
+                ? { ...cv, messages: (cv.messages || []).map((m) => (m.id === welcome.id ? { ...m, isTyping: false } : m)) }
+                : cv
+            ),
+          }))
         }, est)
       } catch (e) { /* ignore timing errors */ }
     }
