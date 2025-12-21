@@ -34,6 +34,7 @@ Una aplicación web moderna de chat impulsada por inteligencia artificial, const
 ![Chat 1](/photos/chat1.png)
 ![Chat 2](/photos/chat2.png)
 ![Chat 3](/photos/chat3.png)
+![Chat 4](/photos/chat4.png)
 
 ## Estructura del Proyecto 📁
 
