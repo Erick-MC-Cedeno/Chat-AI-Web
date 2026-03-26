@@ -2,7 +2,7 @@
 
 Una aplicación web moderna de chat impulsada por inteligencia artificial, construida con tecnologías de última generación.
 
-## Características ✨
+## Características 
 
 - Interfaz de usuario moderna y responsiva
 - Chat en tiempo real con IA
