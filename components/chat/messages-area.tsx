@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { MessageBubble } from "./message-bubble"
+import { Bot } from "lucide-react"
 import type { Message } from "@/types/chat"
 
 interface MessagesAreaProps {
@@ -108,14 +109,16 @@ export function MessagesArea({ messages, isLoading = false }: MessagesAreaProps)
   return (
     <ScrollArea className="h-full w-full" ref={scrollAreaRef}>
       <div className="max-w-4xl mx-auto px-4">
-        <div className="space-y-6 py-6">
+        <div className="space-y-4 pt-8">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-96 text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-popover/80 to-card/80 rounded-full flex items-center justify-center mb-6">
-                <div className="w-8 h-8 bg-gradient-to-br from-muted to-popover rounded-full" />
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-border/50 flex items-center justify-center mb-8 shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <Bot className="h-5 w-5 text-white" />
+                </div>
               </div>
               <h3 className="text-2xl font-semibold text-foreground mb-3">¿En qué puedo ayudarte hoy?</h3>
-              <p className="text-muted-foreground max-w-md leading-relaxed">
+              <p className="text-muted-foreground max-w-md leading-relaxed text-[15px]">
                 Puedes preguntarme sobre programación, matemáticas, escribir código, resolver problemas o cualquier tema
                 que necesites.
               </p>
@@ -129,19 +132,20 @@ export function MessagesArea({ messages, isLoading = false }: MessagesAreaProps)
                 <MessageBubble key={typingMessage.id + "-typing"} message={{ ...typingMessage, content: typingText }} />
               )}
               {isLoading && !typingMessage && (
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 ring-2 ring-purple-400/60 ring-offset-2 ring-offset-background flex items-center justify-center">
+                <div className="flex items-center gap-3 pl-1">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 ring-2 ring-background shadow-md flex items-center justify-center">
                     <span className="flex items-center gap-[3px]">
-                      <span className="w-[6px] h-[6px] rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms", animationDuration: "1s" }} />
-                      <span className="w-[6px] h-[6px] rounded-full bg-white animate-bounce" style={{ animationDelay: "200ms", animationDuration: "1s" }} />
-                      <span className="w-[6px] h-[6px] rounded-full bg-white animate-bounce" style={{ animationDelay: "400ms", animationDuration: "1s" }} />
+                      <span className="w-[5px] h-[5px] rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms", animationDuration: "1.2s" }} />
+                      <span className="w-[5px] h-[5px] rounded-full bg-white animate-bounce" style={{ animationDelay: "200ms", animationDuration: "1.2s" }} />
+                      <span className="w-[5px] h-[5px] rounded-full bg-white animate-bounce" style={{ animationDelay: "400ms", animationDuration: "1.2s" }} />
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground">Pensando...</span>
+                  <span className="text-sm text-muted-foreground">Pensando</span>
                 </div>
               )}
             </>
           )}
+          <div className="h-24" />
         </div>
       </div>
     </ScrollArea>

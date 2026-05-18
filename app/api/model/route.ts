@@ -5,7 +5,7 @@ const FLASK_URL = process.env.FLASK_URL || "https://probable-space-fiesta-wp9r75
 const FLASK_CHAT_PATH = process.env.FLASK_CHAT_PATH || "/chat"
 const FLASK_TIMEOUT_MS = Number(process.env.FLASK_TIMEOUT_MS) || 10000
 
-const NVIDIA_TIMEOUT_MS = 60000
+const NVIDIA_TIMEOUT_MS = 120000
 
 type FlaskResponse = { response?: string; model?: string }
 
