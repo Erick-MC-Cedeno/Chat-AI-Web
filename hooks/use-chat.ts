@@ -51,7 +51,7 @@ export function useChat() {
     const savedModel = (() => {
       try { return (typeof window !== "undefined" ? localStorage.getItem("selectedModel") : null) as ModelType | null } catch { return null }
     })()
-    const validModels: ModelType[] = ["local", "nvidia-llama", "nvidia-nemotron", "nvidia-kimi", "nvidia-gpt-oss", "nvidia-gpt-oss-120b"]
+    const validModels: ModelType[] = ["local", "nvidia-llama", "nvidia-nemotron", "nvidia-kimi", "nvidia-gpt-oss", "nvidia-gpt-oss-120b", "nvidia-glm", "nvidia-mistral"]
     const model: ModelType = savedModel && validModels.includes(savedModel) ? savedModel : "local"
     if (convs.length === 0) {
       const c = ConversationStorage.createNewConversation()

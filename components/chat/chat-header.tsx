@@ -26,6 +26,8 @@ const modelIcons: Record<string, typeof Bot> = {
   "nvidia-kimi": Cpu,
   "nvidia-gpt-oss": Cpu,
   "nvidia-gpt-oss-120b": Cpu,
+  "nvidia-glm": Cpu,
+  "nvidia-mistral": Cpu,
 }
 
 const modelAccentColors: Record<string, string> = {
@@ -35,6 +37,8 @@ const modelAccentColors: Record<string, string> = {
   "nvidia-kimi": "from-fuchsia-500 to-purple-700",
   "nvidia-gpt-oss": "from-sky-500 to-indigo-600",
   "nvidia-gpt-oss-120b": "from-indigo-500 to-violet-700",
+  "nvidia-glm": "from-amber-500 to-orange-600",
+  "nvidia-mistral": "from-yellow-500 to-amber-600",
 }
 
 function ModelTrigger({ value }: { value: ModelType }) {

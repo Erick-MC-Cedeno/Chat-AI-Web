@@ -19,8 +19,8 @@ AVAILABLE_MODELS = {
         "free": True,
     },
     "nvidia-nemotron": {
-        "id": "nvidia/nemotron-mini-4b-instruct",
-        "name": "Nemotron Mini 4B",
+        "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "name": "Nemotron 3 Nano Omni",
         "provider": "NVIDIA",
         "free": True,
     },
@@ -40,6 +40,18 @@ AVAILABLE_MODELS = {
         "id": "openai/gpt-oss-120b",
         "name": "GPT-OSS 120B",
         "provider": "OpenAI",
+        "free": True,
+    },
+    "nvidia-glm": {
+        "id": "z-ai/glm-5.1",
+        "name": "GLM-5.1",
+        "provider": "Z-ai",
+        "free": True,
+    },
+    "nvidia-mistral": {
+        "id": "mistralai/mistral-small-4-119b-2603",
+        "name": "Mistral Small 4 119B",
+        "provider": "Mistral AI",
         "free": True,
     },
 }
