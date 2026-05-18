@@ -1,11 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 
 // Configuración: leer desde variables de entorno para facilitar despliegues
-const FLASK_URL = process.env.FLASK_URL || "http://localhost:4000"
+const FLASK_URL = process.env.FLASK_URL || "https://probable-space-fiesta-wp9r75795q7c5v74-4000.app.github.dev"
 const FLASK_CHAT_PATH = process.env.FLASK_CHAT_PATH || "/chat"
 const FLASK_TIMEOUT_MS = Number(process.env.FLASK_TIMEOUT_MS) || 10000
 
-type FlaskResponse = { response?: string }
+const NVIDIA_TIMEOUT_MS = 60000
+
+type FlaskResponse = { response?: string; model?: string }
 
 async function callFlask(payload: unknown, timeout = FLASK_TIMEOUT_MS): Promise<FlaskResponse> {
   const controller = new AbortController()
@@ -39,9 +41,11 @@ export async function POST(request: NextRequest) {
   try {
   const body = await request.json().catch(() => ({}))
   const prompt = typeof body.prompt === "string" ? body.prompt : body.message
+  const model = typeof body.model === "string" ? body.model : ""
   // Extract optional flags forwarded from client
   const capabilities = body.capabilities
   const ttsFemale = body.ttsFemale
+  const history = Array.isArray(body.history) ? body.history : []
 
     if (!prompt || typeof prompt !== "string") {
       return makeErrorResponse("'prompt' (string) is required", 400)
@@ -49,17 +53,19 @@ export async function POST(request: NextRequest) {
 
     // Forward to Flask and normalize response
   // Forward optional metadata to the Flask model server so it can adapt behavior
-  const flaskPayload: any = { message: prompt }
+  const flaskPayload: any = { message: prompt, history }
+  if (model) flaskPayload.model = model
   if (capabilities) flaskPayload.capabilities = capabilities
   if (ttsFemale) flaskPayload.ttsFemale = true
 
-  const flaskData = await callFlask(flaskPayload)
+  const isNvidia = typeof model === "string" && model.startsWith("nvidia-")
+  const flaskData = await callFlask(flaskPayload, isNvidia ? NVIDIA_TIMEOUT_MS : FLASK_TIMEOUT_MS)
 
     if (!flaskData || typeof flaskData.response !== "string") {
       return makeErrorResponse("Invalid response from model server", 502)
     }
 
-    return NextResponse.json({ response: flaskData.response, timestamp: new Date().toISOString() })
+    return NextResponse.json({ response: flaskData.response, model: flaskData.model || "local", timestamp: new Date().toISOString() })
   } catch (err: any) {
     console.error("[app/api/model] POST error:", err)
 

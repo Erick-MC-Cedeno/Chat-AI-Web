@@ -1,73 +1,30 @@
 "use client"
 
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useRef } from "react"
 import { Input } from "@/components/ui/input"
-import { Send, Loader2, Sparkles, Mic, MicOff } from "lucide-react"
-import { QuickActions } from "./quick-actions"
+import { Send, Loader2, Mic, MicOff, Volume2, VolumeX } from "lucide-react"
 
 interface ChatInputProps {
-  onSendMessage: (message: string, options?: { capabilities?: { [key: string]: boolean }; ttsFemale?: boolean }) => void
+  onSendMessage: (message: string, options?: { ttsFemale?: boolean }) => void
   isLoading: boolean
+  ttsEnabled?: boolean
+  onToggleTts?: () => void
 }
 
-export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
+export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onToggleTts }: ChatInputProps) {
   const [inputValue, setInputValue] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isSpeechSupported, setIsSpeechSupported] = useState(true)
-  // Use stable defaults during SSR to avoid hydration mismatches. We'll restore
-  // persisted values on mount (client-side) in a useEffect below.
-  const [capabilityStates, setCapabilityStates] = useState<{ [key: string]: boolean }>({ Programación: false, Matemáticas: false })
-  const [ttsFemale, setTtsFemale] = useState<boolean>(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
   const isRecordingRef = useRef(false)
   const lastFinalRef = useRef<{ text: string; time: number }>({ text: "", time: 0 })
-  // Persist user preference for voice mode in localStorage ("true" / "false").
-  // Initialize to false (stable for SSR) and restore on mount.
-  const [voiceMode, setVoiceMode] = useState<boolean>(false)
 
   const handleSendMessage = () => {
     if (!inputValue.trim() || isLoading) return
-    onSendMessage(inputValue, { capabilities: capabilityStates, ttsFemale })
+    onSendMessage(inputValue, { ttsFemale: ttsEnabled })
     setInputValue("")
-    // keep focus in the input after sending so the user can continue typing
     inputRef.current?.focus()
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
-    }
-  }
-
-  const handleQuickAction = (text: string) => {
-    if (!isLoading) {
-      setInputValue(text)
-      inputRef.current?.focus()
-    }
-  }
-
-  const handleToggleCapability = (label: string) => {
-    setCapabilityStates((prev) => {
-      const next = { ...prev, [label]: !prev[label] }
-      try {
-        localStorage.setItem("capabilityStates", JSON.stringify(next))
-      } catch (e) {}
-      return next
-    })
-  }
-
-  const handleToggleTts = () => {
-    setTtsFemale((v) => {
-      const next = !v
-      try {
-        localStorage.setItem("ttsFemale", next ? "true" : "false")
-      } catch (e) {}
-      return next
-    })
   }
 
   // Initialize SpeechRecognition (Web Speech API) if available
@@ -205,17 +162,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
       recognition.start()
       setIsRecording(true)
       isRecordingRef.current = true
-      // focus input so caret is visible and user can still edit
       inputRef.current?.focus()
-      // Persist user preference: they enabled voice mode by starting recording
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("voiceMode", "true")
-        }
-      } catch (e) {
-        /* ignore localStorage errors */
-      }
-      setVoiceMode(true)
     } catch (e) {
       console.warn("Failed to start recognition", e)
       setIsRecording(false)
@@ -234,103 +181,14 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
     setIsRecording(false)
     isRecordingRef.current = false
     inputRef.current?.focus()
-    // Persist user preference: they disabled voice mode by stopping recording
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem("voiceMode", "false")
-      }
-    } catch (e) {
-      /* ignore localStorage errors */
-    }
-    setVoiceMode(false)
   }
 
-  // Keep local state and localStorage in sync if storage is changed elsewhere
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key) return
-      try {
-        if (e.key === "voiceMode") setVoiceMode(e.newValue === "true")
-        if (e.key === "ttsFemale") setTtsFemale(e.newValue === "true")
-        if (e.key === "capabilityStates") setCapabilityStates(e.newValue ? JSON.parse(e.newValue) : { Programación: false, Matemáticas: false })
-      } catch (err) {
-        // ignore
-      }
-    }
-    try {
-      window?.addEventListener?.("storage", onStorage)
-    } catch (e) {}
-    return () => {
-      try {
-        window?.removeEventListener?.("storage", onStorage)
-      } catch (e) {}
-    }
-  }, [])
-
-  // On mount, restore persisted preferences from localStorage. Doing this in
-  // useEffect ensures the initial server-render matches the client and avoids
-  // hydration mismatches.
-  useEffect(() => {
-    try {
-      if (typeof window === "undefined") return
-      const v = localStorage.getItem("voiceMode")
-      const tts = localStorage.getItem("ttsFemale")
-      const caps = localStorage.getItem("capabilityStates")
-
-      if (v === "true") setVoiceMode(true)
-      else if (v === "false") setVoiceMode(false)
-
-      if (tts === "true") setTtsFemale(true)
-      else if (tts === "false") setTtsFemale(false)
-
-      if (caps) {
-        try {
-          setCapabilityStates(JSON.parse(caps))
-        } catch (e) {
-          // ignore parse errors
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-  }, [])
-
   return (
-  <div className="border-t bg-popover/80 backdrop-blur-sm border-border">
-      <div className="max-w-4xl mx-auto px-4 py-4">
-        {/* Quick Actions - solo cuando no hay texto */}
-        {!inputValue && (
-          <div className="mb-3">
-            <QuickActions
-              onActionClick={handleQuickAction}
-              disabled={isLoading}
-              capabilityStates={capabilityStates}
-              onToggleCapability={handleToggleCapability}
-              ttsFemale={ttsFemale}
-              onToggleTts={handleToggleTts}
-            />
-          </div>
-        )}
-
-        {/* Input Area */}
-        <div className="flex gap-3 items-end">
-          <div className="flex-1 relative">
-            <Input
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={isLoading ? "Procesando..." : "Envía un mensaje..."}
-              disabled={isLoading}
-              className="w-full py-4 pr-14 pl-4 text-base border-2 border-border focus:border-primary focus:ring-0 rounded-2xl bg-card shadow-sm transition-all duration-200 placeholder:text-muted-foreground"
-            />
-
-            {/* Removed Sparkles hint per UX request */}
-
-            {/* Send button placed inside the input on the right */}
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              {/* Microphone button */}
-              <Button
+    <div className="border-t border-border/60 bg-background">
+      <div className="max-w-4xl mx-auto px-4 pb-4 pt-2">
+        <div className="relative flex items-center bg-muted/40 border border-border/40 focus-within:border-border/80 rounded-2xl shadow-sm transition-all duration-200">
+              {/* Mic button - left side */}
+              <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (!isSpeechSupported) return
@@ -338,56 +196,64 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
                   else startRecording()
                 }}
                 disabled={isLoading || !isSpeechSupported}
-                size="sm"
                 aria-label={isRecording ? "Detener grabación" : "Iniciar grabación"}
-                variant={isRecording ? undefined : undefined}
-                className={`relative h-9 w-9 rounded-full p-0 flex items-center justify-center transition-all duration-200 disabled:bg-muted ${
+                className={`ml-1.5 h-8 w-8 rounded-full flex items-center justify-center transition-all shrink-0 ${
                   isRecording
-                    ? "bg-red-500/90 hover:bg-red-500"
-                    : voiceMode
-                      ? "bg-secondary/80 hover:bg-secondary/90 ring-2 ring-primary/40"
-                      : "bg-secondary/80 hover:bg-secondary/90"
+                    ? "bg-red-500/90 text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 }`}
-                title={isSpeechSupported ? (isRecording ? "Detener" : voiceMode ? "Modo voz recordado — haz click para iniciar" : "Grabar voz") : "Reconocimiento de voz no soportado en este navegador"}
               >
                 {isRecording ? (
-                  <MicOff className="h-4 w-4 text-white" />
+                  <MicOff className="h-4 w-4" />
                 ) : (
-                  <>
-                    <Mic className="h-4 w-4 text-primary-foreground" />
-                    {/* Small persisted mode indicator dot when voiceMode is enabled but not actively recording */}
-                    {voiceMode && !isRecording && (
-                      <span className="absolute -right-0.5 -top-0.5 block h-2 w-2 rounded-full bg-primary-600 ring-1 ring-white" aria-hidden />
-                    )}
-                  </>
+                  <Mic className="h-4 w-4" />
                 )}
-              </Button>
-              {/* Voice mode badge */}
-              <span className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium select-none ${
-                voiceMode ? "bg-green-100 text-green-800" : "bg-muted/10 text-muted-foreground"
-              }`}>
-                Voz: {voiceMode ? "On" : "Off"}
-              </span>
+              </button>
 
-              <Button
-                onMouseDown={(e) => e.preventDefault()} /* prevent button from stealing focus */
+              {/* TTS button - activate bot voice */}
+              <button
+                onClick={onToggleTts}
+                disabled={isLoading}
+                aria-label={ttsEnabled ? "Desactivar voz del bot" : "Activar voz del bot"}
+                className={`ml-1 h-8 w-8 rounded-full flex items-center justify-center transition-all shrink-0 ${
+                  ttsEnabled
+                    ? "bg-blue-500/90 text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                }`}
+              >
+                {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </button>
+
+              <Input
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSendMessage()
+                  }
+                }}
+                placeholder={isLoading ? "Procesando..." : "Envía un mensaje..."}
+                disabled={isLoading}
+                className="flex-1 min-w-0 py-3 px-2 text-sm bg-transparent border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground shadow-none"
+              />
+
+              {/* Send button - right side */}
+              <button
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim() || isLoading}
-                size="sm"
                 aria-label="Enviar mensaje"
-                className="h-9 w-9 rounded-full bg-primary hover:bg-primary/80 disabled:bg-muted disabled:cursor-not-allowed p-0 flex items-center justify-center transition-all duration-200"
+                className="mr-1.5 h-8 w-8 rounded-full bg-primary hover:bg-primary/80 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all shadow-sm shrink-0"
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary-foreground" />
+                  <Loader2 className="h-4 w-4 text-primary-foreground animate-spin" />
                 ) : (
                   <Send className="h-4 w-4 text-primary-foreground" />
                 )}
-              </Button>
+              </button>
             </div>
-          </div>
-        </div>
-
-        {/* Footer info removed as requested */}
       </div>
     </div>
   )

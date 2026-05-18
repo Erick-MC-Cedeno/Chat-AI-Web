@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { toast } from "@/hooks/use-toast"
-import type { Message, ChatState, Conversation } from "@/types/chat"
+import type { Message, ChatState, Conversation, ModelType } from "@/types/chat"
 import { ConversationStorage } from "@/lib/services/conversation-storage"
 
 /**
@@ -15,6 +15,7 @@ export function useChat() {
     currentConversationId: null,
     isLoading: false,
     connectionError: null,
+    selectedModel: "local",
   })
 
   useEffect(() => {
@@ -47,9 +48,14 @@ export function useChat() {
   useEffect(() => {
     const convs = ConversationStorage.loadConversations()
     const id = ConversationStorage.loadCurrentConversationId()
+    const savedModel = (() => {
+      try { return (typeof window !== "undefined" ? localStorage.getItem("selectedModel") : null) as ModelType | null } catch { return null }
+    })()
+    const validModels: ModelType[] = ["local", "nvidia-llama", "nvidia-nemotron", "nvidia-kimi", "nvidia-gpt-oss", "nvidia-gpt-oss-120b"]
+    const model: ModelType = savedModel && validModels.includes(savedModel) ? savedModel : "local"
     if (convs.length === 0) {
       const c = ConversationStorage.createNewConversation()
-      setState({ conversations: [c], currentConversationId: c.id, isLoading: false, connectionError: null })
+      setState({ conversations: [c], currentConversationId: c.id, isLoading: false, connectionError: null, selectedModel: model })
       // If the created conversation includes a bot welcome message marked as typing,
       // schedule clearing the typing flag after an estimated duration so the UI
       // shows the typing indicator first.
@@ -67,7 +73,7 @@ export function useChat() {
         } catch (e) { /* ignore timing errors */ }
       }
     } else {
-      setState({ conversations: convs, currentConversationId: id || convs[0].id, isLoading: false, connectionError: null })
+      setState({ conversations: convs, currentConversationId: id || convs[0].id, isLoading: false, connectionError: null, selectedModel: model })
     }
   }, [])
 
@@ -82,6 +88,10 @@ export function useChat() {
 
   const setLoading = useCallback((v: boolean) => setState((p) => ({ ...p, isLoading: v })), [])
   const setConnectionError = useCallback((err: string | null) => setState((p) => ({ ...p, connectionError: err })), [])
+  const setSelectedModel = useCallback((model: ModelType) => {
+    setState((p) => ({ ...p, selectedModel: model }))
+    try { localStorage.setItem("selectedModel", model) } catch {}
+  }, [])
 
   const createNewConversation = useCallback((title?: string) => {
     const c = ConversationStorage.createNewConversation(title)
@@ -256,6 +266,11 @@ export function useChat() {
     const userMessage: Message = { id: nowId, content: content.trim(), sender: "user", timestamp: new Date() }
   const botMessage: Message = { id: (Date.now() + 1).toString(), content: "", sender: "bot", timestamp: new Date(), isTyping: true }
 
+    // Build history from previous turns ONLY (before adding current messages)
+    const history = (conv?.messages || [])
+      .filter((m) => m.sender === "user" || m.sender === "bot")
+      .map((m) => ({ role: m.sender === "user" ? "user" : "assistant", content: m.content }))
+
     if (!conv) {
       const c = ConversationStorage.createNewConversation(undefined, [userMessage, botMessage])
       setState((p) => ({ ...p, conversations: [c, ...p.conversations], currentConversationId: c.id }))
@@ -269,7 +284,7 @@ export function useChat() {
 
     setLoading(true); setConnectionError(null)
     try {
-      const body: any = { prompt: content }
+      const body: any = { prompt: content, model: state.selectedModel, history }
       if (options?.capabilities) body.capabilities = options.capabilities
       if (options?.ttsFemale) body.ttsFemale = true
 
@@ -287,9 +302,9 @@ export function useChat() {
 
       // Estimate typing duration (ms) based on characters; clamp to reasonable bounds
       try {
-        const msPerChar = 25
+        const msPerChar = 1.2
         const minMs = 300
-        const maxMs = 5000
+        const maxMs = 30000
         const est = Math.min(maxMs, Math.max(minMs, final.length * msPerChar))
         setTimeout(() => {
           const finalMessagesDone = finalMessagesTyping.map((m) => m.id === botMessage.id ? { ...m, isTyping: false } : m)
@@ -307,8 +322,8 @@ export function useChat() {
       const errorMessages = (getCurrentConversation()?.messages || []).map((m) => m.id === botMessage.id ? { ...m, content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.", error: true } : m)
       updateCurrentConversation({ messages: errorMessages })
     } finally { setLoading(false) }
-  }, [state.isLoading, getCurrentConversation, updateCurrentConversation, setLoading, setConnectionError])
+  }, [state.isLoading, state.selectedModel, getCurrentConversation, updateCurrentConversation, setLoading, setConnectionError])
 
   const currentConversation = getCurrentConversation()
-  return { ...state, currentConversation, sendMessage, createNewConversation, switchConversation, deleteConversation, updateConversationTitle }
+  return { ...state, currentConversation, sendMessage, createNewConversation, switchConversation, deleteConversation, updateConversationTitle, setSelectedModel }
 }

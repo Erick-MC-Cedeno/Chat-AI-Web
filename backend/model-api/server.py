@@ -9,7 +9,12 @@ import json
 import re
 import spacy
 import math
+import logging
 from collections import OrderedDict
+from dotenv import load_dotenv
+from nvidia_client import nvidia_chat, AVAILABLE_MODELS
+
+load_dotenv()
 
 # -------------------- CONFIG --------------------
 # Asegúrate de que MAX_LEN coincida con el valor usado en el entrenamiento (500 en tu caso)
@@ -120,18 +125,38 @@ def generate_response(user_text):
 app = Flask(__name__)
 # Habilitar CORS para permitir solicitudes desde tu frontend
 # Asegúrate de que la URL de origen sea la correcta para tu frontend
-CORS(app, origins=["http://localhost:3000"])
+CORS(app, origins=["https://probable-space-fiesta-wp9r75795q7c5v74-3000.app.github.dev"])
 
 @app.route("/chat", methods=["POST"])
 def chat():
     data_json = request.get_json()
     user_input = data_json.get("message", "")
-    
+    model_key = data_json.get("model", "")
+    history = data_json.get("history", [])
+
     if not user_input:
         return jsonify({"response": "Por favor, envía un mensaje."}), 400
 
+    # Route to NVIDIA models if specified
+    if model_key and model_key in AVAILABLE_MODELS:
+        nvidia_response = nvidia_chat(user_input, model_key=model_key, history=history)
+        if nvidia_response:
+            return jsonify({"response": nvidia_response, "model": model_key})
+        return jsonify({
+            "response": "Lo siento, el modelo NVIDIA no está disponible actualmente. Verifica tu API key en backend/model-api/.env o intenta con el modelo Local.",
+            "model": model_key,
+            "error": "NVIDIA API request failed",
+        })
+
+    # Fallback to local Keras model — prepend history for context
+    if history:
+        context = "\n".join(
+            f"{'Usuario' if m.get('role') == 'user' else 'Asistente'}: {m.get('content', '')}"
+            for m in history
+        )
+        user_input = f"{context}\nUsuario: {user_input}"
     response = generate_response(user_input)
-    return jsonify({"response": response})
+    return jsonify({"response": response, "model": "local"})
 
 if __name__ == "__main__":
     # Ejecutar la aplicación Flask

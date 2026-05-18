@@ -15,15 +15,18 @@ export default function ChatbotUI() {
     currentConversationId,
     isLoading,
     connectionError,
+    selectedModel,
     sendMessage,
     createNewConversation,
     switchConversation,
     deleteConversation,
     updateConversationTitle,
+    setSelectedModel,
   } = useChat()
 
   // Start the sidebar collapsed so on refresh it stays closed unless the user opens it
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
+  const [ttsEnabled, setTtsEnabled] = useState(false)
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed)
@@ -55,6 +58,8 @@ export default function ChatbotUI() {
             connectionError={connectionError}
             conversations={conversations}
             currentConversationId={currentConversationId}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
             onNewConversation={createNewConversation}
             onSwitchConversation={switchConversation}
             onDeleteConversation={deleteConversation}
@@ -65,12 +70,12 @@ export default function ChatbotUI() {
 
         {/* Messages Area - Usa toda la altura disponible */}
         <div className="flex-1 min-h-0">
-          <MessagesArea messages={currentConversation?.messages || []} />
+          <MessagesArea messages={currentConversation?.messages || []} isLoading={isLoading} />
         </div>
 
         {/* Input - Fijo en la parte inferior */}
         <div className="flex-shrink-0">
-          <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
+          <ChatInput onSendMessage={sendMessage} isLoading={isLoading} ttsEnabled={ttsEnabled} onToggleTts={() => setTtsEnabled((v) => !v)} />
         </div>
 
         {/* Footer info removed as requested */}

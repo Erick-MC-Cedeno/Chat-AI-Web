@@ -7,9 +7,10 @@ import type { Message } from "@/types/chat"
 
 interface MessagesAreaProps {
   messages: Message[]
+  isLoading?: boolean
 }
 
-export function MessagesArea({ messages }: MessagesAreaProps) {
+export function MessagesArea({ messages, isLoading = false }: MessagesAreaProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [delayedMessages, setDelayedMessages] = useState<Message[]>([])
   const [typingMessage, setTypingMessage] = useState<Message | null>(null)
@@ -126,6 +127,18 @@ export function MessagesArea({ messages }: MessagesAreaProps) {
               ))}
               {typingMessage && (
                 <MessageBubble key={typingMessage.id + "-typing"} message={{ ...typingMessage, content: typingText }} />
+              )}
+              {isLoading && !typingMessage && (
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 ring-2 ring-purple-400/60 ring-offset-2 ring-offset-background flex items-center justify-center">
+                    <span className="flex items-center gap-[3px]">
+                      <span className="w-[6px] h-[6px] rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms", animationDuration: "1s" }} />
+                      <span className="w-[6px] h-[6px] rounded-full bg-white animate-bounce" style={{ animationDelay: "200ms", animationDuration: "1s" }} />
+                      <span className="w-[6px] h-[6px] rounded-full bg-white animate-bounce" style={{ animationDelay: "400ms", animationDuration: "1s" }} />
+                    </span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">Pensando...</span>
+                </div>
               )}
             </>
           )}
