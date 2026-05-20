@@ -26,8 +26,6 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const inputValueRef = useRef("")
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null)
   const levelIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
   const aiPendingRef = useRef(false)
 
   const clearAutoSendTimer = () => {
@@ -61,7 +59,6 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
       isRecordingRef.current = false
       setIsRecording(false)
       stopLevelAnimation()
-      stopMediaRecorder()
     }
     inputRef.current?.focus()
   }
@@ -224,69 +221,12 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
           inputValueRef.current = finalText
         }
       }
-
-      const audioChunks = audioChunksRef.current
-      if (audioChunks.length > 0) {
-        const audioBlob = new Blob(audioChunks, { type: "audio/webm" })
-        const formData = new FormData()
-        formData.append("file", audioBlob, "recording.webm")
-        if (recordingLang) formData.append("language", recordingLang.split("-")[0])
-        const transRes = await fetch("/api/transcribe", {
-          method: "POST",
-          body: formData,
-        })
-        if (transRes.ok) {
-          const transData = await transRes.json()
-          if (transData?.text && transData.text.trim()) {
-            finalText = transData.text
-            setInputValue(finalText)
-            inputValueRef.current = finalText
-          }
-        }
-      }
     } catch {
       // keep original text on any error
     } finally {
       setIsAiProcessing(false)
       aiPendingRef.current = false
     }
-  }
-
-  const startMediaRecorder = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : "audio/mp4"
-      const recorder = new MediaRecorder(stream, { mimeType })
-      audioChunksRef.current = []
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data)
-      }
-      recorder.start()
-      mediaRecorderRef.current = recorder
-    } catch {
-      // MediaRecorder optional — speech repair still works via text
-    }
-  }
-
-  const stopMediaRecorder = async (): Promise<void> => {
-    const recorder = mediaRecorderRef.current
-    if (!recorder) return
-    if (recorder.state !== "inactive") {
-      await new Promise<void>((resolve) => {
-        recorder.onstop = () => {
-          recorder.stream.getTracks().forEach((t) => t.stop())
-          resolve()
-        }
-        recorder.stop()
-      })
-    } else {
-      recorder.stream.getTracks().forEach((t) => t.stop())
-    }
-    mediaRecorderRef.current = null
   }
 
   const startRecording = () => {
@@ -306,7 +246,6 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     }
     try {
       recognition.start()
-      startMediaRecorder()
       inputRef.current?.focus()
     } catch (e) {
       console.warn("Failed to start recognition", e)
@@ -330,8 +269,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
       try { recognition.abort() } catch { try { recognition.stop() } catch { /* ignore */ } }
       recognitionRef.current = null
     }
-    await stopMediaRecorder()
-    if (currentText.trim() || audioChunksRef.current.length > 0) {
+    if (currentText.trim()) {
       processWithAI(currentText)
     }
     inputRef.current?.focus()
