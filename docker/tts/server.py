@@ -121,8 +121,8 @@ def preprocess_text(text: str, lang: str | None = None) -> str:
     return out
 
 
-async def synthesize(voice: str, text: str) -> bytes:
-    communicate = edge_tts.Communicate(text, voice)
+async def synthesize(voice: str, text: str, rate: str = "+0%", pitch: str = "+0Hz") -> bytes:
+    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     audio_data = b""
     async for chunk in communicate.stream():
         if chunk["type"] == "audio":
@@ -152,12 +152,10 @@ def tts_post():
             voice = resolve_voice(model)
 
         processed = preprocess_text(raw_text, lang_hint)
-        use_ssml = data.get("use_ssml", False)
-        ssml_text = data.get("ssml", "")
+        rate = data.get("rate", "+0%")
+        pitch = data.get("pitch", "+0Hz")
 
-        final_text = ssml_text if use_ssml and ssml_text else processed
-
-        audio_bytes = asyncio.run(synthesize(voice, final_text))
+        audio_bytes = asyncio.run(synthesize(voice, processed, rate, pitch))
 
         return Response(audio_bytes, mimetype="audio/mpeg", headers={
             "Access-Control-Allow-Origin": "*",

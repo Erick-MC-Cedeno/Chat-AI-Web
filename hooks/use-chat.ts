@@ -234,27 +234,26 @@ export function useChat() {
   }
 
   /** Try server-side TTS; fall back to browser TTS when necessary. */
-  const playServerTTS = async (text: string, female = false) => {
+  const playServerTTS = async (text: string, female = false, lang = "es") => {
     try {
-  // Request server TTS with SSML enabled for Spanish to improve pronunciation
-  const res = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, lang: "es", ssml: true }) })
+      const res = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, lang, ssml: true }) })
       const data = await res.json().catch(() => ({}))
-      if (data?.fallbackToClient) return playBrowserTTS(text, female, "es")
+      if (data?.fallbackToClient) return playBrowserTTS(text, female, lang)
       if (data?.audioBase64) {
         const bytes = Uint8Array.from(atob(data.audioBase64), (c) => c.charCodeAt(0))
         const blob = new Blob([bytes], { type: data.contentType || "audio/mpeg" })
         try { if (window?.speechSynthesis) window.speechSynthesis.cancel() } catch { }
         try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { }
         const audio = new Audio(URL.createObjectURL(blob))
-        await audio.play().catch(() => playBrowserTTS(text, female, "es"))
+        await audio.play().catch(() => playBrowserTTS(text, female, lang))
         audio.addEventListener("ended", () => { try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { } })
         return
       }
       toast({ title: "Audio de TTS no disponible", description: "Usando TTS del navegador como alternativa." })
-      return playBrowserTTS(text, female, "es")
+      return playBrowserTTS(text, female, lang)
     } catch (e) {
       console.warn("TTS server error, falling back to browser TTS", e)
-      return playBrowserTTS(text, female, "es")
+      return playBrowserTTS(text, female, lang)
     }
   }
 
@@ -354,7 +353,10 @@ export function useChat() {
         updateCurrentConversation({ messages: finalMessagesDone })
       }
 
-      if (options?.ttsFemale && typeof window !== "undefined") await playServerTTS(final, !!options.ttsFemale)
+      if (options?.ttsFemale && typeof window !== "undefined") {
+        const ttsLang = options?.translation?.target_language === "English" ? "en" : "es"
+        await playServerTTS(final, !!options.ttsFemale, ttsLang)
+      }
     } catch (err: any) {
       setConnectionError(`Error de conexión: ${err instanceof Error ? err.message : String(err)}`)
       const errorMessages = (getCurrentConversation()?.messages || []).map((m) => m.id === botMessage.id ? { ...m, content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.", error: true } : m)

@@ -148,6 +148,7 @@ export default function ChatbotUI() {
             ttsEnabled={ttsEnabled}
             onToggleTts={() => setTtsEnabled((v) => !v)}
             recordingLang={selectedAgent === "interpreter" ? (sourceLang === "Spanish" ? "es" : "en-US") : undefined}
+            selectedModel={selectedModel}
           />
         </div>
       </div>
