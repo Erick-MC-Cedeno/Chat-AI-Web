@@ -1,8 +1,14 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { Bot, BookOpenText } from "lucide-react"
 import { AGENTS } from "@/types/chat"
 import type { AgentType } from "@/types/chat"
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  Bot,
+  BookOpenText,
+}
 
 interface AgentSidebarProps {
   selectedAgent: AgentType
@@ -14,6 +20,7 @@ export function AgentSidebar({ selectedAgent, onSelectAgent }: AgentSidebarProps
     <div className="w-16 bg-sidebar/90 backdrop-blur-sm border-r border-border flex flex-col items-center py-4 gap-2 shrink-0">
       {AGENTS.map((agent) => {
         const isSelected = agent.id === selectedAgent
+        const IconComponent = ICON_MAP[agent.icon]
         return (
           <button
             key={agent.id}
@@ -26,7 +33,11 @@ export function AgentSidebar({ selectedAgent, onSelectAgent }: AgentSidebarProps
             )}
             title={agent.name}
           >
-            <span className="text-xl">{agent.icon}</span>
+            {IconComponent ? (
+              <IconComponent className={`w-5 h-5 ${isSelected ? "text-white" : "text-muted-foreground"}`} />
+            ) : (
+              <span className="text-xl">{agent.icon}</span>
+            )}
             {isSelected && (
               <span className="absolute -right-0.5 -top-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-sidebar" />
             )}

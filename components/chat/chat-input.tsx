@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import { Input } from "@/components/ui/input"
-import { Send, Loader2, Mic, MicOff, Volume2, VolumeX } from "lucide-react"
+import { Send, Loader2, Mic, MicOff, Volume2, VolumeX, Sparkles } from "lucide-react"
 
 interface ChatInputProps {
   onSendMessage: (message: string, options?: import("@/types/chat").SendMessageOptions) => void
@@ -17,13 +17,18 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const [isRecording, setIsRecording] = useState(false)
   const [isSpeechSupported, setIsSpeechSupported] = useState(true)
   const [audioLevel, setAudioLevel] = useState(0)
+  const [isAiProcessing, setIsAiProcessing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
   const isRecordingRef = useRef(false)
   const lastFinalRef = useRef<{ text: string; time: number }>({ text: "", time: 0 })
+  const committedTextRef = useRef("")
   const inputValueRef = useRef("")
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null)
   const levelIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const aiPendingRef = useRef(false)
 
   const clearAutoSendTimer = () => {
     if (autoSendTimerRef.current) {
@@ -34,22 +39,30 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
 
   const resetAutoSendTimer = () => {
     clearAutoSendTimer()
-    autoSendTimerRef.current = setTimeout(() => {
-      if (isRecordingRef.current && inputValueRef.current.trim()) {
-        onSendMessage(inputValueRef.current, { ttsFemale: ttsEnabled })
-        setInputValue("")
-        inputValueRef.current = ""
-      }
-      autoSendTimerRef.current = null
-    }, 1000)
   }
 
   const handleSendMessage = () => {
     clearAutoSendTimer()
-    if (!inputValue.trim() || isLoading) return
+    if (!inputValue.trim() || isLoading || isAiProcessing) return
     onSendMessage(inputValue, { ttsFemale: ttsEnabled })
     setInputValue("")
     inputValueRef.current = ""
+    committedTextRef.current = ""
+    lastFinalRef.current = { text: "", time: 0 }
+    if (isRecording) {
+      const recognition = recognitionRef.current
+      if (recognition) {
+        recognition.onend = null
+        recognition.onresult = null
+        recognition.onerror = null
+        try { recognition.abort() } catch { try { recognition.stop() } catch { /* ignore */ } }
+        recognitionRef.current = null
+      }
+      isRecordingRef.current = false
+      setIsRecording(false)
+      stopLevelAnimation()
+      stopMediaRecorder()
+    }
     inputRef.current?.focus()
   }
 
@@ -99,6 +112,8 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     }
 
     recognition.onresult = (event: any) => {
+      if (!isRecordingRef.current) return
+
       let interim = ""
       let finalTranscript = ""
       for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -118,28 +133,42 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
           if (lastFinalRef.current.text === cleaned && now - lastFinalRef.current.time < 3000) {
             return prev
           }
+          lastFinalRef.current = { text: cleaned, time: now }
 
-          if (prev.trim().endsWith(cleaned)) {
-            lastFinalRef.current = { text: cleaned, time: now }
+          const prevTrimmed = prev.trim()
+          if (prevTrimmed.endsWith(cleaned) || prevTrimmed.includes(cleaned)) {
             inputValueRef.current = prev
             return prev
           }
 
-          const sep = prev && prev.trim() ? " " : ""
-          const newText = `${prev}${sep}${cleaned}`
-          lastFinalRef.current = { text: cleaned, time: now }
+          if (cleaned.length >= prevTrimmed.length) {
+            inputValueRef.current = cleaned
+            committedTextRef.current = cleaned
+            return cleaned
+          }
+
+          const sep = prevTrimmed ? " " : ""
+          const newText = `${prevTrimmed}${sep}${cleaned}`
           inputValueRef.current = newText
+          committedTextRef.current = newText
           return newText
         }
 
-        const next = interim || prev
-        inputValueRef.current = next
-        return next
+        if (interim) {
+          const prevTrimmed = prev.trim()
+          const interimTrimmed = interim.trim()
+          if (interimTrimmed.length > prevTrimmed.length) {
+            inputValueRef.current = interimTrimmed
+            return interimTrimmed
+          }
+          inputValueRef.current = prev
+          return prev
+        }
+
+        inputValueRef.current = prev
+        return prev
       })
 
-      if (finalTranscript.trim() || interim.trim()) {
-        resetAutoSendTimer()
-      }
     }
 
     recognition.onerror = (e: any) => {
@@ -158,34 +187,126 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     }
 
     recognition.onend = () => {
-      if (isRecordingRef.current) {
+      if (isRecordingRef.current && recognitionRef.current) {
         try {
           initRecognition()
-          recognitionRef.current?.start()
+          if (recognitionRef.current) {
+            recognitionRef.current.start()
+          }
         } catch (e) {
           console.warn("Failed to restart recognition", e)
           isRecordingRef.current = false
           setIsRecording(false)
         }
-      } else {
-        isRecordingRef.current = false
-        setIsRecording(false)
       }
     }
 
     recognitionRef.current = recognition
   }
 
+  const processWithAI = async (text: string) => {
+    if (!text.trim() || aiPendingRef.current) return
+    aiPendingRef.current = true
+    setIsAiProcessing(true)
+    let finalText = text
+    try {
+      const langCode = recordingLang ? recordingLang.split("-")[0] : undefined
+      const res = await fetch("/api/repair-speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, lang: langCode }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.correctedText && data.correctedText.trim()) {
+          finalText = data.correctedText
+          setInputValue(finalText)
+          inputValueRef.current = finalText
+        }
+      }
+
+      const audioChunks = audioChunksRef.current
+      if (audioChunks.length > 0) {
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" })
+        const formData = new FormData()
+        formData.append("file", audioBlob, "recording.webm")
+        if (recordingLang) formData.append("language", recordingLang.split("-")[0])
+        const transRes = await fetch("/api/transcribe", {
+          method: "POST",
+          body: formData,
+        })
+        if (transRes.ok) {
+          const transData = await transRes.json()
+          if (transData?.text && transData.text.trim()) {
+            finalText = transData.text
+            setInputValue(finalText)
+            inputValueRef.current = finalText
+          }
+        }
+      }
+    } catch {
+      // keep original text on any error
+    } finally {
+      setIsAiProcessing(false)
+      aiPendingRef.current = false
+    }
+  }
+
+  const startMediaRecorder = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : "audio/mp4"
+      const recorder = new MediaRecorder(stream, { mimeType })
+      audioChunksRef.current = []
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data)
+      }
+      recorder.start()
+      mediaRecorderRef.current = recorder
+    } catch {
+      // MediaRecorder optional — speech repair still works via text
+    }
+  }
+
+  const stopMediaRecorder = async (): Promise<void> => {
+    const recorder = mediaRecorderRef.current
+    if (!recorder) return
+    if (recorder.state !== "inactive") {
+      await new Promise<void>((resolve) => {
+        recorder.onstop = () => {
+          recorder.stream.getTracks().forEach((t) => t.stop())
+          resolve()
+        }
+        recorder.stop()
+      })
+    } else {
+      recorder.stream.getTracks().forEach((t) => t.stop())
+    }
+    mediaRecorderRef.current = null
+  }
+
   const startRecording = () => {
     clearAutoSendTimer()
+    committedTextRef.current = ""
+    lastFinalRef.current = { text: "", time: 0 }
+    setIsRecording(true)
+    isRecordingRef.current = true
+    startLevelAnimation()
     initRecognition()
     const recognition = recognitionRef.current
-    if (!recognition) return
+    if (!recognition) {
+      setIsRecording(false)
+      isRecordingRef.current = false
+      stopLevelAnimation()
+      return
+    }
     try {
       recognition.start()
-      setIsRecording(true)
-      isRecordingRef.current = true
-      startLevelAnimation()
+      startMediaRecorder()
       inputRef.current?.focus()
     } catch (e) {
       console.warn("Failed to start recognition", e)
@@ -195,18 +316,24 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     }
   }
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     clearAutoSendTimer()
     stopLevelAnimation()
-    const recognition = recognitionRef.current
-    if (!recognition) return
-    try {
-      recognition.stop()
-    } catch {
-      /* ignore */
-    }
+    const currentText = inputValueRef.current
     setIsRecording(false)
     isRecordingRef.current = false
+    const recognition = recognitionRef.current
+    if (recognition) {
+      recognition.onend = null
+      recognition.onresult = null
+      recognition.onerror = null
+      try { recognition.abort() } catch { try { recognition.stop() } catch { /* ignore */ } }
+      recognitionRef.current = null
+    }
+    await stopMediaRecorder()
+    if (currentText.trim() || audioChunksRef.current.length > 0) {
+      processWithAI(currentText)
+    }
     inputRef.current?.focus()
   }
 
@@ -215,7 +342,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   return (
     <div className="border-t border-border/60 bg-background">
       <div className="max-w-4xl mx-auto px-4 pb-4 pt-2">
-        <div className={`relative flex items-center rounded-2xl shadow-sm transition-all duration-300 ${
+        <div className={`relative flex items-center rounded-2xl shadow-sm transition-all duration-300 overflow-hidden ${
           isRecording
             ? "bg-red-500/5 border border-red-500/30"
             : "bg-muted/40 border border-border/40 focus-within:border-border/80"
@@ -236,7 +363,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
               }}
               disabled={isLoading || !isSpeechSupported}
               aria-label={isRecording ? "Detener grabación" : "Iniciar grabación"}
-              className="relative h-9 w-9 rounded-full flex items-center justify-center transition-all shrink-0"
+              className="relative h-9 w-9 rounded-full flex items-center justify-center transition-transform duration-200 shrink-0"
               style={{ transform: `scale(${micButtonScale})` }}
             >
               {isRecording ? (
@@ -257,8 +384,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
               )}
             </button>
 
-            {isRecording && (
-              <div className="flex items-end gap-[2px] h-5 w-6">
+            <div className={`flex items-end gap-[2px] h-5 w-6 ${isRecording ? '' : 'invisible'}`}>
                 {[1, 2, 3, 4].map((i) => {
                   const barHeight = Math.max(4, audioLevel * 20 * (i % 2 === 0 ? 1.2 : 0.8) + 4)
                   const delay = i * 0.12
@@ -274,7 +400,6 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
                   )
                 })}
               </div>
-            )}
           </div>
 
           <button
@@ -302,15 +427,16 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
                 }
               }}
               placeholder={
+                isAiProcessing ? "Mejorando con IA..." :
                 isRecording ? (inputValue ? "" : "Escuchando...") :
                 isLoading ? "Procesando..." :
                 "Envía un mensaje..."
               }
-              disabled={isLoading}
+              disabled={isLoading || isAiProcessing}
               className="flex-1 min-w-0 py-3 px-1 text-sm bg-transparent border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 shadow-none"
             />
-            {isRecording && !inputValue && (
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {isRecording && (
+              <span className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity duration-200 ${inputValue ? 'opacity-0' : 'opacity-100'}`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse [animation-delay:0.2s]" />
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse [animation-delay:0.4s]" />
@@ -321,15 +447,19 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
+            disabled={!inputValue.trim() || isLoading || isAiProcessing}
             aria-label="Enviar mensaje"
-            className={`mr-1.5 h-8 w-8 rounded-full flex items-center justify-center transition-all shadow-sm shrink-0 ${
-              isRecording
-                ? "bg-red-500 hover:bg-red-600 disabled:opacity-40"
-                : "bg-primary hover:bg-primary/80 disabled:opacity-40"
+            className={`mr-1.5 h-8 w-8 rounded-full flex items-center justify-center shadow-sm shrink-0 ${
+              isAiProcessing
+                ? "bg-amber-500 hover:bg-amber-600"
+                : isRecording
+                  ? "bg-red-500 hover:bg-red-600 disabled:opacity-40"
+                  : "bg-primary hover:bg-primary/80 disabled:opacity-40"
             } disabled:cursor-not-allowed`}
           >
-            {isLoading ? (
+            {isAiProcessing ? (
+              <Sparkles className="h-4 w-4 text-white animate-pulse" />
+            ) : isLoading ? (
               <Loader2 className="h-4 w-4 text-primary-foreground animate-spin" />
             ) : (
               <Send className={`h-4 w-4 ${isRecording ? "text-white" : "text-primary-foreground"}`} />

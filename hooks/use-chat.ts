@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { toast } from "@/hooks/use-toast"
-import type { Message, ChatState, Conversation, ModelType, SendMessageOptions } from "@/types/chat"
+import type { AgentType, Message, ChatState, Conversation, ModelType, SendMessageOptions } from "@/types/chat"
 import { ConversationStorage } from "@/lib/services/conversation-storage"
 
 /**
@@ -54,7 +54,7 @@ export function useChat() {
     const validModels: ModelType[] = ["local", "nvidia-llama", "nvidia-nemotron", "nvidia-kimi", "nvidia-gpt-oss", "nvidia-gpt-oss-120b", "nvidia-glm", "nvidia-mistral"]
     const model: ModelType = savedModel && validModels.includes(savedModel) ? savedModel : "local"
     if (convs.length === 0) {
-      const c = ConversationStorage.createNewConversation()
+      const c = ConversationStorage.createNewConversation("chat")
       setState({ conversations: [c], currentConversationId: c.id, isLoading: false, connectionError: null, selectedModel: model })
       // If the created conversation includes a bot welcome message marked as typing,
       // schedule clearing the typing flag after an estimated duration so the UI
@@ -93,8 +93,8 @@ export function useChat() {
     try { localStorage.setItem("selectedModel", model) } catch {}
   }, [])
 
-  const createNewConversation = useCallback((title?: string) => {
-    const c = ConversationStorage.createNewConversation(title)
+  const createNewConversation = useCallback((title?: string, agentType?: AgentType) => {
+    const c = ConversationStorage.createNewConversation(agentType || "chat", title)
     setState((p) => ({ ...p, conversations: [c, ...p.conversations], currentConversationId: c.id }))
     // If the created conversation includes a bot welcome message marked as typing,
     // schedule clearing the typing flag after an estimated duration so the UI
@@ -290,7 +290,7 @@ export function useChat() {
       .map((m) => ({ role: m.sender === "user" ? "user" : "assistant", content: m.content }))
 
     if (!conv) {
-      const c = ConversationStorage.createNewConversation(undefined, [userMessage, botMessage])
+      const c = ConversationStorage.createNewConversation(options?.translation ? "interpreter" : "chat", undefined, [userMessage, botMessage])
       setState((p) => ({ ...p, conversations: [c, ...p.conversations], currentConversationId: c.id }))
       conv = c
       created = true

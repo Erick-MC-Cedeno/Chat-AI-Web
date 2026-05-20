@@ -25,16 +25,23 @@ SPEECH REPAIR RULES (apply before translating):
 - Fix run-together words.
 - Remove artifacts like repeated words or partial syllables.
 - DO NOT add new information or rephrase creatively.
-- Stay conservative: match the original input as closely as possible.
-- If the text is already clean, leave it as-is.
 
 TRANSLATION RULES:
 - Never explain the translation or any repairs made.
-- Never summarize.
-- Never answer questions.
-- Never add commentary.
-- Preserve tone, intent, punctuation, emojis, slang, and structure.
-- Maintain professional-grade translation quality.
+- Never summarize, answer questions, or add commentary.
+- Preserve tone, intent, emojis, slang, and punctuation.
+- CRITICAL: Output must sound like a native speaker of the TARGET language. This takes priority over preserving the original sentence structure.
+  - Translate the MEANING, NOT the words. Restructure the sentence to sound natural in the target language.
+  - To Spanish: Avoid English calques. Do NOT translate word-by-word. Use natural Spanish phrasing even if it means reordering the sentence completely.
+  - To English: Use natural English idioms and flow. Avoid Spanish-influenced word order or structure.
+- COMMON MISTAKES TO AVOID:
+  - "which is" → "Este es / Eso es" (NOT "¿Cuál es" — that is a question, not a statement).
+  - "practice lesson" → "lección práctica" or "práctica" (NOT "lección de práctica").
+  - "is practicing" → "practica" (NOT "está practicando" — use simple present when it sounds more natural).
+  - "I am being" → "Estoy" (situational) or "Soy" (permanent), NOT a literal "estar siendo" calque.
+  - "actually" → "realmente", "en realidad", "de hecho" — include it; do NOT drop it.
+  - "so" → "así que", "entonces", "por eso" — choose what sounds natural in context.
+- If a native speaker would never phrase it that way, restructure until it sounds natural.
 - If the text already matches the target language, return it unchanged.
 - Output ONLY the final translated text.
 

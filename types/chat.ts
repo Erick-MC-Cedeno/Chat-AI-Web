@@ -12,6 +12,7 @@ export interface Conversation {
   id: string
   title: string
   messages: Message[]
+  agentType: AgentType
   createdAt: Date
   updatedAt: Date
 }
@@ -54,14 +55,14 @@ export const AGENTS: Agent[] = [
     id: "chat",
     name: "Chat Mode",
     description: "General AI Assistant",
-    icon: "💬",
+    icon: "Bot",
     gradient: "from-blue-500 to-purple-600",
   },
   {
     id: "interpreter",
     name: "Interpreter Mode",
     description: "AI Translation Specialist",
-    icon: "🌐",
+    icon: "BookOpenText",
     gradient: "from-emerald-500 to-teal-600",
   },
 ]

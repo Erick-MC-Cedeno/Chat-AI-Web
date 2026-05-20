@@ -1,4 +1,4 @@
-import type { Conversation, Message } from "@/types/chat"
+import type { AgentType, Conversation, Message } from "@/types/chat"
 
 export class ConversationStorage {
   private static readonly STORAGE_KEY = "chatbot_conversations"
@@ -63,21 +63,22 @@ export class ConversationStorage {
     return `Conversación ${new Date().toLocaleDateString()}`
   }
 
-  static createNewConversation(title?: string, messages?: Message[]): Conversation {
+  static createNewConversation(agentType: AgentType = "chat", title?: string, messages?: Message[]): Conversation {
+    const welcomeMessages: Record<AgentType, string> = {
+      chat: "¡Hola! Soy tu asistente inteligente. Puedo ayudarte con programación, matemáticas y responder tus preguntas. ¿En qué puedo ayudarte hoy?",
+      interpreter: "¡Hola! Soy tu intérprete AI. Puedo traducir entre inglés y español en tiempo real. ¿Qué te gustaría traducir?",
+    }
+
     const welcomeMessage: Message = {
       id: "welcome",
-      content:
-        "¡Hola! Soy tu asistente inteligente. Puedo ayudarte con programación, matemáticas y responder tus preguntas. ¿En qué puedo ayudarte hoy?",
+      content: welcomeMessages[agentType],
       sender: "bot",
       timestamp: new Date(),
-      // Start as typing so the UI shows the typing indicator when a new
-      // conversation is opened.
       isTyping: true,
     }
 
     const initialMessages = messages && messages.length > 0 ? messages : [welcomeMessage]
 
-    // If no explicit title provided, try to generate one from provided messages
     let convTitle = title
     if (!convTitle) {
       convTitle = this.generateConversationTitle(initialMessages)
@@ -87,6 +88,7 @@ export class ConversationStorage {
       id: Date.now().toString(),
       title: convTitle,
       messages: initialMessages,
+      agentType,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
