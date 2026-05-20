@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { toast } from "@/hooks/use-toast"
-import type { Message, ChatState, Conversation, ModelType } from "@/types/chat"
+import type { Message, ChatState, Conversation, ModelType, SendMessageOptions } from "@/types/chat"
 import { ConversationStorage } from "@/lib/services/conversation-storage"
 
 /**
@@ -258,13 +258,31 @@ export function useChat() {
     }
   }
 
-  const sendMessage = useCallback(async (content: string, options?: { capabilities?: { [key: string]: boolean }; ttsFemale?: boolean }) => {
+  const cleanResponseText = (text: string): string => {
+    return text
+      // Quitar marcadores markdown bold/italic (dejar solo el texto)
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/__(.+?)__/g, '$1')
+      .replace(/_(.+?)_/g, '$1')
+      // Quitar títulos markdown
+      .replace(/^#{1,6}\s*/gm, '')
+      // Quitar etiquetas HTML sueltas
+      .replace(/<\/?[^>]+(>|$)/g, '')
+      // Normalizar espacios y saltos de línea
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+$/gm, '')
+      .trim()
+  }
+
+  const sendMessage = useCallback(async (content: string, options?: SendMessageOptions) => {
     if (!content.trim() || state.isLoading) return
     let conv = getCurrentConversation()
     let created = false
     const nowId = Date.now().toString()
     const userMessage: Message = { id: nowId, content: content.trim(), sender: "user", timestamp: new Date() }
-  const botMessage: Message = { id: (Date.now() + 1).toString(), content: "", sender: "bot", timestamp: new Date(), isTyping: true }
+  const isTranslation = !!options?.translation
+  const botMessage: Message = { id: (Date.now() + 1).toString(), content: "", sender: "bot", timestamp: new Date(), isTyping: true, isTranslation }
 
     // Build history from previous turns ONLY (before adding current messages)
     const history = (conv?.messages || [])
@@ -284,14 +302,34 @@ export function useChat() {
 
     setLoading(true); setConnectionError(null)
     try {
-      const body: any = { prompt: content, model: state.selectedModel, history }
-      if (options?.capabilities) body.capabilities = options.capabilities
-      if (options?.ttsFemale) body.ttsFemale = true
+      let final: string
 
-      const res = await fetch("/api/model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-      if (!res.ok) throw new Error(`Error en el endpoint interno: ${res.status}`)
-      const data = await res.json().catch(() => ({}))
-      let final = typeof data?.response === "string" && data.response.trim() ? data.response : "Lo siento, no pude procesar tu solicitud. Por favor, intenta nuevamente."
+      if (isTranslation) {
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            source_language: options.translation!.source_language,
+            target_language: options.translation!.target_language,
+            text: content,
+            model: state.selectedModel,
+          }),
+        })
+        if (!res.ok) throw new Error(`Translation API error: ${res.status}`)
+        const data = await res.json().catch(() => ({}))
+        final = typeof data?.translatedText === "string" && data.translatedText.trim()
+          ? data.translatedText
+          : "Translation failed. Please try again."
+      } else {
+        const body: any = { prompt: content, model: state.selectedModel, history }
+        if (options?.capabilities) body.capabilities = options.capabilities
+        if (options?.ttsFemale) body.ttsFemale = true
+
+        const res = await fetch("/api/model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+        if (!res.ok) throw new Error(`Error en el endpoint interno: ${res.status}`)
+        const data = await res.json().catch(() => ({}))
+        final = typeof data?.response === "string" && data.response.trim() ? cleanResponseText(data.response) : "Lo siento, no pude procesar tu solicitud. Por favor, intenta nuevamente."
+      }
 
       // Update bot message with final content but keep isTyping=true so the UI
       // can animate the typewriter effect for new responses. After an estimated

@@ -95,13 +95,29 @@ const formatMessage = (content: string) => {
   const isCodeLine = (line: string) => {
     if (/^\s*$/.test(line)) return false
     const trimmed = line.trim()
+
+    // Sangría fuerte = código
     if (/^\s{4,}|^\t/.test(line)) return true
-    if (/^\s*#/.test(line)) return true
-    if (/[{}\[\];<>]|=>|->/.test(line)) return true
-    if (/\b(return|throw)\b/.test(line)) return true
-    if (/\b(const|let|var|def|function|class)\b/.test(line)) return true
-    if (/\w+\s*=\s*[^\s].+/.test(line)) return true
-    if (/^\s*(def|class|if|for|while|try|except|with)\b.*:\s*$/.test(line)) return true
+
+    // Línea comentada con # al inicio
+    if (/^\s*#/.test(trimmed)) return true
+
+    // Múltiples símbolos específicos de código (excluyendo paréntesis comunes en texto)
+    const codeChars = (trimmed.match(/[{}[\];]/g) || []).length
+    if (codeChars >= 2) return true
+
+    // Flechas de función/ puntero
+    if (/=>|->/.test(trimmed)) return true
+
+    // Palabras clave de programación (inglés, raras en español)
+    if (/\b(const|let|var|function|class|import|export|require|return|throw)\b/.test(trimmed)) return true
+
+    // Asignación con identificador válido (ej: `foo = bar`)
+    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*\s*=\s*/.test(trimmed)) return true
+
+    // Definición estilo Python
+    if (/^\s*(def|class|if|elif|else|for|while|try|except|with|async|await)\b.*:\s*$/.test(trimmed)) return true
+
     return false
   }
 
@@ -235,6 +251,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           <div className="text-[15px] leading-[1.7] -mt-[1px]">
             {message.isTyping ? (
               <p className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: escapeHtml(message.content).replace(/\n/g, "<br />") }} />
+            ) : message.isTranslation ? (
+              <p className="whitespace-pre-wrap leading-[1.75] text-[15px]" dangerouslySetInnerHTML={{ __html: escapeHtml(message.content).replace(/\n/g, "<br />") }} />
             ) : (
               formatMessage(message.content).map((part, index) => {
                 if (message.sender === "user") {

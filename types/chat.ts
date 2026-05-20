@@ -5,6 +5,7 @@ export interface Message {
   timestamp: Date
   isTyping?: boolean
   error?: boolean
+  isTranslation?: boolean
 }
 
 export interface Conversation {
@@ -37,6 +38,44 @@ export const MODEL_OPTIONS: { value: ModelType; label: string; description: stri
   { value: "nvidia-glm", label: "GLM-5.1", description: "Z-ai — vía NVIDIA" },
   { value: "nvidia-mistral", label: "Mistral Small 4 119B", description: "Mistral AI — vía NVIDIA" },
 ]
+
+export type AgentType = "chat" | "interpreter"
+
+export interface Agent {
+  id: AgentType
+  name: string
+  description: string
+  icon: string
+  gradient: string
+}
+
+export const AGENTS: Agent[] = [
+  {
+    id: "chat",
+    name: "Chat Mode",
+    description: "General AI Assistant",
+    icon: "💬",
+    gradient: "from-blue-500 to-purple-600",
+  },
+  {
+    id: "interpreter",
+    name: "Interpreter Mode",
+    description: "AI Translation Specialist",
+    icon: "🌐",
+    gradient: "from-emerald-500 to-teal-600",
+  },
+]
+
+export interface TranslationConfig {
+  source_language: string
+  target_language: string
+}
+
+export interface SendMessageOptions {
+  ttsFemale?: boolean
+  capabilities?: { [key: string]: boolean }
+  translation?: TranslationConfig
+}
 
 export interface ChatState {
   conversations: Conversation[]
