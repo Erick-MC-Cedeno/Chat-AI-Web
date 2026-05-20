@@ -270,8 +270,8 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const micButtonScale = isRecording ? 1 + audioLevel * 0.35 : 1
 
   return (
-    <div className="border-t border-border/60 bg-background">
-      <div className="max-w-4xl mx-auto px-4 pb-4 pt-2">
+    <div className="w-full">
+      <div className="max-w-xl mx-auto border-t border-border/60 bg-background px-4 pb-4 pt-2">
         <div className={`relative flex items-center rounded-2xl shadow-sm transition-all duration-300 overflow-hidden ${
           isRecording
             ? "bg-violet-500/5 border border-violet-500/30"
