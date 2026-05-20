@@ -7,7 +7,6 @@ import { ChatInput } from "@/components/chat/chat-input"
 import { ErrorAlert } from "@/components/chat/error-alert"
 
 import { AgentSidebar } from "@/components/agents/agent-sidebar"
-import { LanguageBar } from "@/components/interpreter/language-bar"
 import { useChat } from "@/hooks/use-chat"
 import type { AgentType, SendMessageOptions } from "@/types/chat"
 
@@ -121,21 +120,15 @@ export default function ChatbotUI() {
             onSwitchConversation={switchConversation}
             onDeleteConversation={deleteConversation}
             onUpdateTitle={updateConversationTitle}
+            showLanguageBar={selectedAgent === "interpreter"}
+            sourceLang={sourceLang}
+            targetLang={targetLang}
+            onSourceChange={setSourceLang}
+            onTargetChange={setTargetLang}
+            onSwap={swapLanguages}
           />
           {connectionError && <ErrorAlert error={connectionError} />}
         </div>
-
-        {selectedAgent === "interpreter" && (
-          <div className="flex-shrink-0">
-            <LanguageBar
-              sourceLang={sourceLang}
-              targetLang={targetLang}
-              onSourceChange={setSourceLang}
-              onTargetChange={setTargetLang}
-              onSwap={swapLanguages}
-            />
-          </div>
-        )}
 
         <div className="flex-1 min-h-0">
           <MessagesArea messages={agentCurrentConversation?.messages || []} isLoading={isLoading} />

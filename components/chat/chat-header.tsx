@@ -3,7 +3,8 @@
 import { MobileSidebarToggle } from "./mobile-sidebar-toggle"
 import { ConnectionStatus } from "./connection-status"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bot, Cpu, Sparkles } from "lucide-react"
+import { Bot, Cpu, Sparkles, Languages, ArrowLeftRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { MODEL_OPTIONS } from "@/types/chat"
 import type { Conversation, ModelType } from "@/types/chat"
 
@@ -17,6 +18,12 @@ interface ChatHeaderProps {
   onSwitchConversation: (id: string) => void
   onDeleteConversation: (id: string) => void
   onUpdateTitle: (id: string, title: string) => void
+  showLanguageBar?: boolean
+  sourceLang?: string
+  targetLang?: string
+  onSourceChange?: (lang: string) => void
+  onTargetChange?: (lang: string) => void
+  onSwap?: () => void
 }
 
 const modelIcons: Record<string, typeof Bot> = {
@@ -75,19 +82,70 @@ export function ChatHeader({
   onSwitchConversation,
   onDeleteConversation,
   onUpdateTitle,
+  showLanguageBar,
+  sourceLang,
+  targetLang,
+  onSourceChange,
+  onTargetChange,
+  onSwap,
 }: ChatHeaderProps) {
   return (
     <div className="flex items-center justify-between py-3 px-4 bg-popover/80 backdrop-blur-sm border-b border-border">
-      <MobileSidebarToggle
-        conversations={conversations}
-        currentConversationId={currentConversationId}
-        onNewConversation={onNewConversation}
-        onSwitchConversation={onSwitchConversation}
-        onDeleteConversation={onDeleteConversation}
-        onUpdateTitle={onUpdateTitle}
-      />
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <MobileSidebarToggle
+          conversations={conversations}
+          currentConversationId={currentConversationId}
+          onNewConversation={onNewConversation}
+          onSwitchConversation={onSwitchConversation}
+          onDeleteConversation={onDeleteConversation}
+          onUpdateTitle={onUpdateTitle}
+        />
 
-      <div className="flex-1 flex items-center justify-end gap-3">
+        {showLanguageBar && (
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <Languages className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[11px] font-medium text-emerald-400">Interpreter</span>
+            </div>
+
+            <div className="w-32">
+              <Select value={sourceLang} onValueChange={(v) => onSourceChange?.(v)}>
+                <SelectTrigger className="h-8 text-xs bg-card/50 border-border/60 rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["English", "Spanish"].map((lang) => (
+                    <SelectItem key={lang} value={lang} className="text-xs">
+                      {lang}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button variant="ghost" size="icon" onClick={onSwap} className="h-7 w-7 rounded-full shrink-0">
+              <ArrowLeftRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+
+            <div className="w-32">
+              <Select value={targetLang} onValueChange={(v) => onTargetChange?.(v)}>
+                <SelectTrigger className="h-8 text-xs bg-card/50 border-border/60 rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["English", "Spanish"].map((lang) => (
+                    <SelectItem key={lang} value={lang} className="text-xs">
+                      {lang}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3">
         <Select value={selectedModel} onValueChange={(v) => onModelChange(v as ModelType)}>
           <SelectTrigger className="w-auto min-w-[200px] h-10 px-3 border-border/60 bg-card/50 hover:bg-card/80 hover:border-border transition-all duration-200 rounded-xl shadow-sm">
             <SelectValue>
