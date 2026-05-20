@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { Input } from "@/components/ui/input"
+import { useState, useRef, useEffect } from "react"
 import { Send, Loader2, Mic, MicOff, Volume2, VolumeX, Sparkles } from "lucide-react"
 
 interface ChatInputProps {
@@ -18,7 +17,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const [isSpeechSupported, setIsSpeechSupported] = useState(true)
   const [audioLevel, setAudioLevel] = useState(0)
   const [isAiProcessing, setIsAiProcessing] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const recognitionRef = useRef<any>(null)
   const isRecordingRef = useRef(false)
   const lastFinalRef = useRef<{ text: string; time: number }>({ text: "", time: 0 })
@@ -27,6 +26,14 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null)
   const levelIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const aiPendingRef = useRef(false)
+
+  useEffect(() => {
+    const el = inputRef.current
+    if (el) {
+      el.style.height = "auto"
+      el.style.height = Math.min(el.scrollHeight, 200) + "px"
+    }
+  }, [inputValue])
 
   const clearAutoSendTimer = () => {
     if (autoSendTimerRef.current) {
@@ -184,10 +191,13 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     }
 
     recognition.onend = () => {
-      if (isRecordingRef.current && recognitionRef.current) {
+      if (!isRecordingRef.current) return
+      setTimeout(() => {
+        if (!isRecordingRef.current) return
         try {
           initRecognition()
           if (recognitionRef.current) {
+            recognitionRef.current.continuous = true
             recognitionRef.current.start()
           }
         } catch (e) {
@@ -195,7 +205,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
           isRecordingRef.current = false
           setIsRecording(false)
         }
-      }
+      }, 100)
     }
 
     recognitionRef.current = recognition
@@ -354,10 +364,16 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
           </button>
 
           <div className="flex-1 relative">
-            <Input
+            <style>{`textarea.hide-scrollbar::-webkit-scrollbar { display: none }`}</style>
+            <textarea
               ref={inputRef}
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={(e) => {
+                setInputValue(e.target.value)
+                const el = e.target
+                el.style.height = "auto"
+                el.style.height = Math.min(el.scrollHeight, 200) + "px"
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault()
@@ -371,7 +387,9 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
                 "Envía un mensaje..."
               }
               disabled={isLoading || isAiProcessing}
-              className="flex-1 min-w-0 py-3 px-1 text-sm bg-transparent border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 shadow-none"
+              rows={1}
+              className="hide-scrollbar flex-1 min-w-0 w-full py-3 px-1 text-sm bg-transparent border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 shadow-none resize-none outline-none"
+              style={{ maxHeight: "200px", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
             />
             {isRecording && (
               <span className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity duration-200 ${inputValue ? 'opacity-0' : 'opacity-100'}`}>

@@ -48,6 +48,7 @@ export interface Agent {
   description: string
   icon: string
   gradient: string
+  skills?: string[]
 }
 
 export const AGENTS: Agent[] = [
@@ -64,6 +65,12 @@ export const AGENTS: Agent[] = [
     description: "AI Translation Specialist",
     icon: "BookOpenText",
     gradient: "from-emerald-500 to-teal-600",
+    skills: [
+      "Traducción word-for-word: no omitir palabras",
+      "No inventar palabras ni añadir información",
+      "Preservar números, direcciones y nombres propios",
+      "Corregir errores de reconocimiento de voz",
+    ],
   },
 ]
 

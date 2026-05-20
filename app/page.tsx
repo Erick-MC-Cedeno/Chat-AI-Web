@@ -5,7 +5,7 @@ import { ChatHeader } from "@/components/chat/chat-header"
 import { MessagesArea } from "@/components/chat/messages-area"
 import { ChatInput } from "@/components/chat/chat-input"
 import { ErrorAlert } from "@/components/chat/error-alert"
-import { ConversationSidebar } from "@/components/chat/conversation-sidebar"
+
 import { AgentSidebar } from "@/components/agents/agent-sidebar"
 import { LanguageBar } from "@/components/interpreter/language-bar"
 import { useChat } from "@/hooks/use-chat"
@@ -27,7 +27,6 @@ export default function ChatbotUI() {
     setSelectedModel,
   } = useChat()
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [ttsEnabled, setTtsEnabled] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<AgentType>("chat")
 
@@ -54,10 +53,6 @@ export default function ChatbotUI() {
     () => agentConversations.find((c) => c.id === currentConversationId) || agentConversations[0] || null,
     [agentConversations, currentConversationId]
   )
-
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed)
-  }
 
   useEffect(() => {
     try { localStorage.setItem("sourceLang", sourceLang) } catch {}
@@ -104,20 +99,15 @@ export default function ChatbotUI() {
 
   return (
     <div className="h-screen bg-background text-foreground flex">
-      <AgentSidebar selectedAgent={selectedAgent} onSelectAgent={handleSelectAgent} />
-
-      <div className="hidden md:block">
-        <ConversationSidebar
-          conversations={agentConversations}
-          currentConversationId={agentCurrentConversation?.id || null}
-          onNewConversation={handleNewConversation}
-          onSwitchConversation={switchConversation}
-          onDeleteConversation={deleteConversation}
-          onUpdateTitle={updateConversationTitle}
-          isCollapsed={sidebarCollapsed}
-          onToggleCollapse={toggleSidebar}
-        />
-      </div>
+      <AgentSidebar
+        selectedAgent={selectedAgent}
+        onSelectAgent={handleSelectAgent}
+        conversations={agentConversations}
+        currentConversationId={agentCurrentConversation?.id || null}
+        onNewConversation={handleNewConversation}
+        onSwitchConversation={switchConversation}
+        onDeleteConversation={deleteConversation}
+      />
 
       <div className="flex-1 flex flex-col h-screen min-w-0">
         <div className="flex-shrink-0">
