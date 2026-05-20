@@ -14,21 +14,15 @@ const MODEL_MAP: Record<string, string> = {
 
 const DEFAULT_MODEL = "meta/llama-3.1-8b-instruct"
 
-const REPAIR_PROMPT = `You are a speech-to-text error correction AI. Your ONLY task is to fix errors introduced by automatic speech recognition (ASR).
+const COMPLETE_PROMPT = `You are an AI assistant that detects incomplete text and continues it naturally. Do NOT correct or modify the user's existing text.
 
 RULES:
-- The input is in {LANGUAGE}. Correct it in that language.
-- Fix incomplete or cut-off words using context.
-- Correct phonetically similar words (homophones like "their/there/they're", "hear/here", "write/right").
-- For Spanish: fix common ASR errors (e.g. "haber" vs "a ver", "hecho" vs "echo", "haya" vs "halla", "tubo" vs "tuvo").
-- For English: fix common ASR errors (e.g. "gonna" → "going to", "wanna" → "want to", "gimme" → "give me").
-- Restore missing punctuation and capitalization.
-- Fix run-together words (e.g. "gotcha" from "got you" — keep or split based on context).
-- Remove artifacts like repeated words or partial syllables ("I I want" → "I want").
-- DO NOT add new information or rephrase creatively.
-- Preserve the original meaning, tone, and intent.
-- If the text is already clean, return it unchanged.
-- Output ONLY the corrected text — no explanations, no commentary.`
+- The input is in {LANGUAGE}. Work in that language.
+- If the text appears COMPLETE (ends with . ! ? or forms a complete thought), return it EXACTLY AS-IS — do not change a single character.
+- If the text appears INCOMPLETE (cut off mid-word, mid-sentence, trailing off, or missing ending punctuation), extend it with the most natural continuation.
+- NEVER alter, correct, or rephrase the user's original words. Preserve spelling, grammar, and style exactly as written.
+- Add ONLY the predicted continuation — do not rewrite or touch what is already there.
+- Output ONLY the resulting text — no explanations, no commentary.`
 
 function getApiKey(): string | null {
   return process.env.NVIDIA_API_KEY || null
@@ -61,10 +55,10 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: nvidiaModel,
         messages: [
-          { role: "system", content: REPAIR_PROMPT.replace("{LANGUAGE}", languageName) },
+          { role: "system", content: COMPLETE_PROMPT.replace("{LANGUAGE}", languageName) },
           { role: "user", content: text },
         ],
-        temperature: 0.1,
+        temperature: 0.3,
         max_tokens: 4096,
       }),
     })
@@ -75,9 +69,9 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json()
-    const correctedText = data?.choices?.[0]?.message?.content?.trim() || text
+    const completedText = data?.choices?.[0]?.message?.content?.trim() || text
 
-    return NextResponse.json({ correctedText })
+    return NextResponse.json({ correctedText: completedText })
   } catch (err: any) {
     console.error("[repair-speech] Error:", err)
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 })

@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Send, Loader2, Mic, MicOff, Volume2, VolumeX, Sparkles, Brain } from "lucide-react"
-import { VoiceCapture, isVoiceCaptureSupported } from "@/lib/voice-capture"
+import { Send, Loader2, Mic, MicOff, Volume2, VolumeX, Sparkles } from "lucide-react"
 
 interface ChatInputProps {
   onSendMessage: (message: string, options?: import("@/types/chat").SendMessageOptions) => void
@@ -13,17 +12,18 @@ interface ChatInputProps {
   selectedModel?: string
 }
 
-export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onToggleTts, recordingLang, selectedModel = "local" }: ChatInputProps) {
+function isSpeechRecognitionSupported(): boolean {
+  return typeof window !== "undefined" && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
+}
+
+export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onToggleTts, recordingLang }: ChatInputProps) {
   const [inputValue, setInputValue] = useState("")
   const [isRecording, setIsRecording] = useState(false)
-  const [isSpeechSupported, setIsSpeechSupported] = useState(true)
   const [audioLevel, setAudioLevel] = useState(0)
   const [isAiProcessing, setIsAiProcessing] = useState(false)
-  const [useAI, setUseAI] = useState(false)
-  const [aiAvailable, setAiAvailable] = useState(false)
+  const [speechSupported, setSpeechSupported] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const recognitionRef = useRef<any>(null)
-  const voiceCaptureRef = useRef<VoiceCapture | null>(null)
   const isRecordingRef = useRef(false)
   const lastFinalRef = useRef<{ text: string; time: number }>({ text: "", time: 0 })
   const committedTextRef = useRef("")
@@ -33,16 +33,16 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const aiPendingRef = useRef(false)
 
   useEffect(() => {
+    setSpeechSupported(isSpeechRecognitionSupported())
+  }, [])
+
+  useEffect(() => {
     const el = inputRef.current
     if (el) {
       el.style.height = "auto"
       el.style.height = Math.min(el.scrollHeight, 200) + "px"
     }
   }, [inputValue])
-
-  useEffect(() => {
-    setAiAvailable(isVoiceCaptureSupported())
-  }, [])
 
   const clearAutoSendTimer = () => {
     if (autoSendTimerRef.current) {
@@ -66,10 +66,6 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   }, [inputValue, isLoading, isAiProcessing, onSendMessage, ttsEnabled, isRecording])
 
   const stopAllRecording = useCallback(() => {
-    if (useAI && voiceCaptureRef.current) {
-      voiceCaptureRef.current.stop()
-      voiceCaptureRef.current = null
-    }
     const recognition = recognitionRef.current
     if (recognition) {
       recognition.onend = null
@@ -81,55 +77,39 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     isRecordingRef.current = false
     setIsRecording(false)
     stopLevelAnimation()
-  }, [useAI])
+  }, [])
 
-  const startLevelAnimation = () => {
-    if (levelIntervalRef.current) clearInterval(levelIntervalRef.current)
-    levelIntervalRef.current = setInterval(() => {
-      setAudioLevel(Math.random())
-    }, 120)
-  }
-
-  const stopLevelAnimation = () => {
-    if (levelIntervalRef.current) {
-      clearInterval(levelIntervalRef.current)
-      levelIntervalRef.current = null
-    }
-    setAudioLevel(0)
-  }
-
-  const processWithAI = useCallback(async (text: string) => {
-    if (!text.trim() || aiPendingRef.current) return
-    aiPendingRef.current = true
-    setIsAiProcessing(true)
-    let finalText = text
-    try {
-      const langCode = recordingLang ? recordingLang.split("-")[0] : undefined
-      const res = await fetch("/api/repair-speech", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, lang: langCode }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data?.correctedText && data.correctedText.trim()) {
-          finalText = data.correctedText
-          setInputValue(finalText)
-          inputValueRef.current = finalText
-        }
-      }
-    } catch {
-    } finally {
-      setIsAiProcessing(false)
-      aiPendingRef.current = false
-    }
-  }, [recordingLang])
+  // const processWithAI = useCallback(async (text: string) => {
+  //   if (!text.trim() || aiPendingRef.current) return
+  //   aiPendingRef.current = true
+  //   setIsAiProcessing(true)
+  //   let finalText = text
+  //   try {
+  //     const langCode = recordingLang ? recordingLang.split("-")[0] : undefined
+  //     const res = await fetch("/api/repair-speech", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ text, lang: langCode }),
+  //     })
+  //     if (res.ok) {
+  //       const data = await res.json()
+  //       if (data?.correctedText && data.correctedText.trim()) {
+  //         finalText = data.correctedText
+  //         setInputValue(finalText)
+  //         inputValueRef.current = finalText
+  //       }
+  //     }
+  //   } catch {
+  //   } finally {
+  //     setIsAiProcessing(false)
+  //     aiPendingRef.current = false
+  //   }
+  // }, [recordingLang])
 
   const initRecognition = useCallback(() => {
-    const win = typeof window !== "undefined" ? (window as any) : null
-    const SpeechRecognition = win?.SpeechRecognition || win?.webkitSpeechRecognition
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) {
-      setIsSpeechSupported(false)
+      setSpeechSupported(false)
       return
     }
 
@@ -147,9 +127,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     recognition.lang = recordingLang || (typeof navigator !== "undefined" ? navigator.language : "en-US")
     recognition.interimResults = true
     recognition.maxAlternatives = 1
-    try {
-      recognition.continuous = true
-    } catch {}
+    try { recognition.continuous = true } catch {}
 
     recognition.onresult = (event: any) => {
       if (!isRecordingRef.current) return
@@ -171,10 +149,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
         if (newFinal) {
           const cleaned = newFinal.trim()
           const now = Date.now()
-
-          if (lastFinalRef.current.text === cleaned && now - lastFinalRef.current.time < 3000) {
-            return prev
-          }
+          if (lastFinalRef.current.text === cleaned && now - lastFinalRef.current.time < 3000) return prev
           lastFinalRef.current = { text: cleaned, time: now }
 
           if (committed.includes(cleaned)) {
@@ -207,7 +182,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
       if (e?.error === "not-allowed" || e?.error === "service-not-allowed") {
         isRecordingRef.current = false
         setIsRecording(false)
-        setIsSpeechSupported(false)
+        setSpeechSupported(false)
       }
     }
 
@@ -218,8 +193,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
         try {
           initRecognition()
           if (recognitionRef.current) {
-            recognitionRef.current.continuous = true
-            recognitionRef.current.start()
+            try { recognitionRef.current.start() } catch {}
           }
         } catch {
           isRecordingRef.current = false
@@ -231,24 +205,20 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     recognitionRef.current = recognition
   }, [recordingLang])
 
-  const onAITranscript = useCallback((text: string) => {
-    const now = Date.now()
-    if (lastFinalRef.current.text === text && now - lastFinalRef.current.time < 3000) return
-    lastFinalRef.current = { text, time: now }
+  const startLevelAnimation = () => {
+    if (levelIntervalRef.current) clearInterval(levelIntervalRef.current)
+    levelIntervalRef.current = setInterval(() => {
+      setAudioLevel(Math.random())
+    }, 120)
+  }
 
-    setInputValue((prev) => {
-      const committed = committedTextRef.current
-      if (committed.includes(text)) {
-        inputValueRef.current = committed
-        return committed
-      }
-      const sep = committed ? " " : ""
-      const newText = `${committed}${sep}${text}`
-      committedTextRef.current = newText
-      inputValueRef.current = newText
-      return newText
-    })
-  }, [])
+  const stopLevelAnimation = () => {
+    if (levelIntervalRef.current) {
+      clearInterval(levelIntervalRef.current)
+      levelIntervalRef.current = null
+    }
+    setAudioLevel(0)
+  }
 
   const startRecording = useCallback(async () => {
     clearAutoSendTimer()
@@ -258,56 +228,23 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     isRecordingRef.current = true
     startLevelAnimation()
 
-    if (useAI) {
-      const vc = new VoiceCapture({
-        lang: recordingLang?.split("-")[0] || "es",
-        model: selectedModel,
-        noiseGateThreshold: 0.015,
-        vadThreshold: 0.025,
-        vadHoldMs: 500,
-        maxPauseMs: 1000,
-        onTranscript: onAITranscript,
-        onStateChange: (state) => {
-          if (state === "speech") {
-            setAudioLevel(0.5 + Math.random() * 0.5)
-          } else if (state === "listening") {
-            setAudioLevel(0.1 + Math.random() * 0.15)
-          }
-        },
-        onError: (err) => {
-          console.warn("AI Voice Capture error:", err)
-          setIsSpeechSupported(false)
-        },
-      })
-      voiceCaptureRef.current = vc
-      try {
-        await vc.start()
-        inputRef.current?.focus()
-      } catch {
-        setIsRecording(false)
-        isRecordingRef.current = false
-        stopLevelAnimation()
-        voiceCaptureRef.current = null
-      }
-    } else {
-      initRecognition()
-      const recognition = recognitionRef.current
-      if (!recognition) {
-        setIsRecording(false)
-        isRecordingRef.current = false
-        stopLevelAnimation()
-        return
-      }
-      try {
-        recognition.start()
-        inputRef.current?.focus()
-      } catch {
-        setIsRecording(false)
-        isRecordingRef.current = false
-        stopLevelAnimation()
-      }
+    initRecognition()
+    const recognition = recognitionRef.current
+    if (!recognition) {
+      setIsRecording(false)
+      isRecordingRef.current = false
+      stopLevelAnimation()
+      return
     }
-  }, [useAI, recordingLang, onAITranscript, initRecognition, clearAutoSendTimer, startLevelAnimation])
+    try {
+      recognition.start()
+      inputRef.current?.focus()
+    } catch {
+      setIsRecording(false)
+      isRecordingRef.current = false
+      stopLevelAnimation()
+    }
+  }, [initRecognition, clearAutoSendTimer, startLevelAnimation])
 
   const stopRecording = useCallback(async () => {
     clearAutoSendTimer()
@@ -316,26 +253,19 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     setIsRecording(false)
     isRecordingRef.current = false
 
-    if (useAI) {
-      if (voiceCaptureRef.current) {
-        voiceCaptureRef.current.stop()
-        voiceCaptureRef.current = null
-      }
-    } else {
-      const recognition = recognitionRef.current
-      if (recognition) {
-        recognition.onend = null
-        recognition.onresult = null
-        recognition.onerror = null
-        try { recognition.abort() } catch { try { recognition.stop() } catch {} }
-        recognitionRef.current = null
-      }
+    const recognition = recognitionRef.current
+    if (recognition) {
+      recognition.onend = null
+      recognition.onresult = null
+      recognition.onerror = null
+      try { recognition.abort() } catch { try { recognition.stop() } catch {} }
+      recognitionRef.current = null
     }
-    if (currentText.trim() && !useAI) {
-      processWithAI(currentText)
-    }
+    // if (currentText.trim()) {
+    //   processWithAI(currentText)
+    // }
     inputRef.current?.focus()
-  }, [useAI, processWithAI, clearAutoSendTimer])
+  }, [clearAutoSendTimer])
 
   const micButtonScale = isRecording ? 1 + audioLevel * 0.35 : 1
 
@@ -344,16 +274,12 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
       <div className="max-w-4xl mx-auto px-4 pb-4 pt-2">
         <div className={`relative flex items-center rounded-2xl shadow-sm transition-all duration-300 overflow-hidden ${
           isRecording
-            ? useAI
-              ? "bg-violet-500/5 border border-violet-500/30"
-              : "bg-red-500/5 border border-red-500/30"
+            ? "bg-violet-500/5 border border-violet-500/30"
             : "bg-muted/40 border border-border/40 focus-within:border-border/80"
         }`}>
           {isRecording && (
             <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-              <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-transparent animate-pulse ${
-                useAI ? 'via-violet-500/5' : 'via-red-500/5'
-              }`} />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-violet-500/5 to-transparent animate-pulse" />
             </div>
           )}
 
@@ -361,60 +287,27 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
             <button
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
-                if (!isSpeechSupported && !aiAvailable) return
+                if (!speechSupported) return
                 if (isRecording) stopRecording()
                 else startRecording()
               }}
-              disabled={isLoading || (!isSpeechSupported && !aiAvailable)}
+              disabled={isLoading || !speechSupported}
               aria-label={isRecording ? "Detener grabación" : "Iniciar grabación"}
               className="relative h-9 w-9 rounded-full flex items-center justify-center transition-transform duration-200 shrink-0"
               style={{ transform: `scale(${micButtonScale})` }}
             >
               {isRecording ? (
                 <>
-                  <span className={`absolute inset-0 rounded-full animate-ping ${
-                    useAI ? 'bg-violet-500/20' : 'bg-red-500/20'
-                  }`} />
-                  <span className={`absolute inset-0 rounded-full ${
-                    useAI ? 'bg-violet-500/30' : 'bg-red-500/30'
-                  }`} />
+                  <span className="absolute inset-0 rounded-full animate-ping bg-violet-500/20" />
+                  <span className="absolute inset-0 rounded-full bg-violet-500/30" />
                   <MicOff className="h-4 w-4 text-white relative z-10" />
                   <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-white rounded-full animate-pulse" />
                 </>
               ) : (
                 <span className="text-muted-foreground hover:text-foreground hover:bg-muted/60 h-8 w-8 rounded-full flex items-center justify-center">
-                  {useAI ? (
-                    <Brain className="h-4 w-4" />
-                  ) : !isSpeechSupported ? (
-                    <MicOff className="h-4 w-4 text-red-400/60" />
-                  ) : (
-                    <Mic className="h-4 w-4" />
-                  )}
+                  <Mic className="h-4 w-4" />
                 </span>
               )}
-            </button>
-
-            <button
-              onClick={() => {
-                if (isRecording) stopRecording()
-                setUseAI((p) => !p)
-              }}
-              disabled={!aiAvailable || selectedModel === "local"}
-              aria-label={useAI ? "Usar micrófono estándar" : "Usar voz con IA"}
-              title={
-                selectedModel === "local" && aiAvailable
-                  ? "Selecciona un modelo NVIDIA para usar IA"
-                  : useAI ? "Modo IA (VAD + Noise Gate + NVIDIA ASR)" : "Modo estándar (Web Speech)"
-              }
-              className={`ml-0.5 h-6 w-6 rounded flex items-center justify-center transition-all shrink-0 text-[10px] font-bold ${
-                selectedModel === "local" && aiAvailable
-                  ? "text-muted-foreground/30 cursor-not-allowed"
-                  : useAI
-                    ? "bg-violet-500/80 text-white"
-                    : "text-muted-foreground/50 hover:text-muted-foreground"
-              }`}
-            >
-              AI
             </button>
 
             <div className={`flex items-end gap-[2px] h-5 w-6 ${isRecording ? '' : 'invisible'}`}>
@@ -424,9 +317,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
                   return (
                     <span
                       key={i}
-                      className={`w-[3px] rounded-full transition-all duration-100 ${
-                        useAI ? 'bg-violet-400' : 'bg-red-400'
-                      }`}
+                      className="w-[3px] rounded-full transition-all duration-100 bg-violet-400"
                       style={{
                         height: `${barHeight}px`,
                         animationDelay: `${delay}s`,
@@ -468,8 +359,8 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
                 }
               }}
               placeholder={
-                isAiProcessing ? "Mejorando con IA..." :
-                isRecording ? (inputValue ? "" : useAI ? "Esperando voz..." : "Escuchando...") :
+                isAiProcessing ? "Completando con IA..." :
+                isRecording ? (inputValue ? "" : "Escuchando...") :
                 isLoading ? "Procesando..." :
                 "Envía un mensaje..."
               }
@@ -480,9 +371,9 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
             />
             {isRecording && (
               <span className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity duration-200 ${inputValue ? 'opacity-0' : 'opacity-100'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${useAI ? 'bg-violet-400' : 'bg-red-400'}`} />
-                <span className={`w-1.5 h-1.5 rounded-full animate-pulse [animation-delay:0.2s] ${useAI ? 'bg-violet-400' : 'bg-red-400'}`} />
-                <span className={`w-1.5 h-1.5 rounded-full animate-pulse [animation-delay:0.4s] ${useAI ? 'bg-violet-400' : 'bg-red-400'}`} />
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-violet-400" />
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse [animation-delay:0.2s] bg-violet-400" />
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse [animation-delay:0.4s] bg-violet-400" />
               </span>
             )}
           </div>
@@ -496,9 +387,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
               isAiProcessing
                 ? "bg-amber-500 hover:bg-amber-600"
                 : isRecording
-                  ? useAI
-                    ? "bg-violet-500 hover:bg-violet-600 disabled:opacity-40"
-                    : "bg-red-500 hover:bg-red-600 disabled:opacity-40"
+                  ? "bg-violet-500 hover:bg-violet-600 disabled:opacity-40"
                   : "bg-primary hover:bg-primary/80 disabled:opacity-40"
             } disabled:cursor-not-allowed`}
           >

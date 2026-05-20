@@ -99,15 +99,15 @@ export async function POST(request: Request) {
 
         const preset = ((body.preset || body.style) && String(body.preset || body.style).toLowerCase()) || 'default'
 
-        let rate = len < 80 ? '+95%' : (len < 240 ? '+98%' : '+100%')
-        let pitch = '+0st'
+        let rate = '+0%'
+        let pitch = '+0Hz'
 
         if (preset === 'natural') {
-          rate = len < 80 ? '+92%' : (len < 240 ? '+96%' : '+98%')
-          pitch = '+2st'
+          rate = '-10%'
+          pitch = '+20Hz'
         } else if (preset === 'robotic') {
-          rate = '+98%'
-          pitch = '-3st'
+          rate = '+0%'
+          pitch = '-30Hz'
         }
 
         if (body.rate && typeof body.rate === 'string') rate = body.rate

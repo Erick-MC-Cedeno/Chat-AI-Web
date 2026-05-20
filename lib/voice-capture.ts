@@ -174,8 +174,18 @@ export class VoiceCapture {
     const audioBlob = new Blob(this.audioChunks, { type: "audio/webm" })
     this.audioChunks = []
 
+    let audioFile: Blob
+    let filename: string
+    try {
+      audioFile = await convertToWav(audioBlob)
+      filename = "speech.wav"
+    } catch {
+      audioFile = audioBlob
+      filename = "speech.webm"
+    }
+
     const formData = new FormData()
-    formData.append("audio", audioBlob, "speech.webm")
+    formData.append("audio", audioFile, filename)
     formData.append("lang", this.options.lang || "es")
     if (this.options.model) formData.append("model", this.options.model)
 
@@ -188,6 +198,8 @@ export class VoiceCapture {
       if (!res.ok) {
         const err = await res.text().catch(() => "ASR failed")
         console.warn("ASR error:", err)
+        this.setState("error")
+        this.options.onError?.(err)
         return
       }
 
@@ -225,6 +237,55 @@ export class VoiceCapture {
     this.stop()
     this.options = {}
   }
+}
+
+async function convertToWav(blob: Blob): Promise<Blob> {
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+  const arrayBuffer = await blob.arrayBuffer()
+  const audioBuffer = await ctx.decodeAudioData(arrayBuffer)
+  await ctx.close()
+
+  const numChannels = audioBuffer.numberOfChannels
+  const sampleRate = audioBuffer.sampleRate
+  const length = audioBuffer.length
+  const pcmData = new Float32Array(length * numChannels)
+
+  for (let ch = 0; ch < numChannels; ch++) {
+    const channelData = audioBuffer.getChannelData(ch)
+    pcmData.set(channelData, ch * length)
+  }
+
+  const byteRate = sampleRate * numChannels * 2
+  const blockAlign = numChannels * 2
+  const dataSize = length * numChannels * 2
+  const buffer = new ArrayBuffer(44 + dataSize)
+  const view = new DataView(buffer)
+
+  const writeStr = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i))
+  }
+  writeStr(0, "RIFF")
+  view.setUint32(4, 36 + dataSize, true)
+  writeStr(8, "WAVE")
+  writeStr(12, "fmt ")
+  view.setUint32(16, 16, true)
+  view.setUint16(20, 1, true)
+  view.setUint16(22, numChannels, true)
+  view.setUint32(24, sampleRate, true)
+  view.setUint32(28, byteRate, true)
+  view.setUint16(32, blockAlign, true)
+  view.setUint16(34, 16, true)
+  writeStr(36, "data")
+  view.setUint32(40, dataSize, true)
+
+  let offset = 44
+  for (let i = 0; i < pcmData.length; i++) {
+    const s = Math.max(-1, Math.min(1, pcmData[i]))
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true)
+    offset += 2
+  }
+
+  return new Blob([buffer], { type: "audio/wav" })
 }
 
 export function isVoiceCaptureSupported(): boolean {
