@@ -83,11 +83,22 @@ const config: Config = {
   				to: {
   					height: '0'
   				}
+  			},
+  			'sound-bar': {
+  				'0%, 100%': {
+  					height: '3px',
+  					opacity: '0.5'
+  				},
+  				'50%': {
+  					height: '14px',
+  					opacity: '1'
+  				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'sound-bar': 'sound-bar 0.6s ease-in-out infinite'
   		}
   	}
   },

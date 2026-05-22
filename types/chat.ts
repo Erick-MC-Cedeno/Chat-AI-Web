@@ -58,6 +58,9 @@ export const AGENTS: Agent[] = [
     description: "General AI Assistant",
     icon: "Bot",
     gradient: "from-blue-500 to-purple-600",
+    skills: [
+      "Reconoce el alfabeto fonético (nato y español) y escribe solo las letras resultantes sin el deletreo fonético",
+    ],
   },
   {
     id: "interpreter",
@@ -70,6 +73,7 @@ export const AGENTS: Agent[] = [
       "No inventar palabras ni añadir información",
       "Preservar números, direcciones y nombres propios",
       "Corregir errores de reconocimiento de voz",
+      "Reconoce deletreo fonético (nato y español) y escribe solo las letras resultantes sin el deletreo fonético",
     ],
   },
 ]

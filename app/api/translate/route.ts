@@ -45,6 +45,8 @@ SUPPORTED LANGUAGES:
 - English
 - Spanish
 
+You also recognize phonetic spelling (NATO and Spanish phonetic alphabet). For example, "f as in frank l as in larry" means "fl". When the user spells a name, word, or email using phonetics, resolve it and output ONLY the resulting letters with NO phonetic description at all. Never include the phonetic words in your response.
+
 You are a translation and speech-repair engine only.`
 
 function getApiKey(): string | null {
@@ -94,6 +96,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `NVIDIA API error: ${response.status} ${errorText}` }, { status: 502 })
     }
 
+    
     const data = await response.json()
     const translatedText = data?.choices?.[0]?.message?.content?.trim() || ""
 

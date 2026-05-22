@@ -8,6 +8,7 @@ import { ErrorAlert } from "@/components/chat/error-alert"
 
 import { AgentSidebar } from "@/components/agents/agent-sidebar"
 import { useChat } from "@/hooks/use-chat"
+import { resolvePhonetic } from "@/lib/phonetic-resolver"
 import type { AgentType, SendMessageOptions } from "@/types/chat"
 
 export default function ChatbotUI() {
@@ -18,6 +19,7 @@ export default function ChatbotUI() {
     isLoading,
     connectionError,
     selectedModel,
+    isAgentSpeaking,
     sendMessage,
     createNewConversation,
     switchConversation,
@@ -84,13 +86,14 @@ export default function ChatbotUI() {
 
   const handleSendMessage = useCallback(
     (content: string, options?: SendMessageOptions) => {
+      const cleaned = resolvePhonetic(content)
       if (selectedAgent === "interpreter") {
-        sendMessage(content, {
+        sendMessage(cleaned, {
           ...options,
           translation: { source_language: sourceLang, target_language: targetLang },
         })
       } else {
-        sendMessage(content, options)
+        sendMessage(cleaned, options)
       }
     },
     [selectedAgent, sourceLang, targetLang, sendMessage]
@@ -140,8 +143,9 @@ export default function ChatbotUI() {
             isLoading={isLoading}
             ttsEnabled={ttsEnabled}
             onToggleTts={() => setTtsEnabled((v) => !v)}
-            recordingLang={selectedAgent === "interpreter" ? (sourceLang === "Spanish" ? "es" : "en-US") : undefined}
+            recordingLang={selectedAgent === "interpreter" ? (sourceLang === "Spanish" ? "es-ES" : "en-US") : "es-ES"}
             selectedModel={selectedModel}
+            agentSpeaking={isAgentSpeaking}
           />
         </div>
       </div>

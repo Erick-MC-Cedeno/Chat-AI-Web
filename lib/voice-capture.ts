@@ -1,8 +1,11 @@
 "use client"
 
+import { micState, type MicUser } from "./mic-state"
+
 export interface VoiceCaptureOptions {
   lang?: string
   model?: string
+  micUser?: MicUser
   noiseGateThreshold?: number
   vadThreshold?: number
   vadHoldMs?: number
@@ -16,6 +19,11 @@ export interface VoiceCaptureOptions {
 
 export type VoiceCaptureState = "idle" | "listening" | "speech" | "processing" | "error"
 
+const SPEECH_BAND_LOW = 300
+const SPEECH_BAND_HIGH = 3400
+const NOISE_FLOOR_ALPHA = 0.04
+const VAD_HYSTERESIS_DB = 3
+
 export class VoiceCapture {
   private options: VoiceCaptureOptions
   private stream: MediaStream | null = null
@@ -24,28 +32,50 @@ export class VoiceCapture {
   private analyser: AnalyserNode | null = null
   private mediaRecorder: MediaRecorder | null = null
   private animationId: number | null = null
+  private currentRms: number = 0
   private state: VoiceCaptureState = "idle"
   private audioChunks: Blob[] = []
   private speechStartTime: number = 0
   private lastSpeechTime: number = 0
   private isSpeaking: boolean = false
   private silenceTimer: ReturnType<typeof setTimeout> | null = null
-  private vadBuffer: Float32Array = new Float32Array(0)
-  private readonly VAD_WINDOW_SIZE = 1024
+
+  private noiseFloor = 0.02
+  private rmsHistory: number[] = []
+  private readonly RMS_HISTORY_SIZE = 60
+  private adaptiveThreshold = 0.03
+
+  private highpassFilter: BiquadFilterNode | null = null
+  private lowpassFilter: BiquadFilterNode | null = null
+
+  private micUser: MicUser = "chat"
 
   constructor(options: VoiceCaptureOptions = {}) {
     this.options = {
-      noiseGateThreshold: 0.02,
-      vadThreshold: 0.03,
-      vadHoldMs: 600,
-      minSpeechMs: 300,
-      maxPauseMs: 1200,
+      noiseGateThreshold: 0.015,
+      vadThreshold: 0.035,
+      vadHoldMs: 500,
+      minSpeechMs: 250,
+      maxPauseMs: 1000,
       ...options,
     }
+    this.micUser = options.micUser || "chat"
   }
 
   get currentState(): VoiceCaptureState {
     return this.state
+  }
+
+  getAudioLevel(): number {
+    return Math.min(1, this.currentRms * 5)
+  }
+
+  getNoiseFloor(): number {
+    return this.noiseFloor
+  }
+
+  getAdaptiveThreshold(): number {
+    return this.adaptiveThreshold
   }
 
   private setState(s: VoiceCaptureState) {
@@ -54,6 +84,11 @@ export class VoiceCapture {
   }
 
   async start(): Promise<void> {
+    if (micState.active && micState.active !== this.micUser) {
+      throw new Error("Another microphone is already active")
+    }
+    if (!micState.acquire(this.micUser)) return
+
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -67,26 +102,37 @@ export class VoiceCapture {
       this.audioContext = new AudioContext({ sampleRate: 16000 })
       this.source = this.audioContext.createMediaStreamSource(this.stream)
 
-      const highpass = this.audioContext.createBiquadFilter()
-      highpass.type = "highpass"
-      highpass.frequency.value = 80
+      this.highpassFilter = this.audioContext.createBiquadFilter()
+      this.highpassFilter.type = "highpass"
+      this.highpassFilter.frequency.value = 80
+      this.highpassFilter.Q.value = 0.707
+
+      this.lowpassFilter = this.audioContext.createBiquadFilter()
+      this.lowpassFilter.type = "lowpass"
+      this.lowpassFilter.frequency.value = 7600
+      this.lowpassFilter.Q.value = 0.707
 
       const gain = this.audioContext.createGain()
-      gain.gain.value = 2.0
+      gain.gain.value = 1.5
 
       this.analyser = this.audioContext.createAnalyser()
       this.analyser.fftSize = 2048
-      this.analyser.smoothingTimeConstant = 0.2
+      this.analyser.smoothingTimeConstant = 0.15
+      this.analyser.minDecibels = -90
+      this.analyser.maxDecibels = -10
 
-      this.source.connect(highpass)
-      highpass.connect(gain)
+      this.source.connect(this.highpassFilter)
+      this.highpassFilter.connect(this.lowpassFilter)
+      this.lowpassFilter.connect(gain)
       gain.connect(this.analyser)
 
       this.audioChunks = []
       this.isSpeaking = false
       this.speechStartTime = 0
       this.lastSpeechTime = 0
-      this.vadBuffer = new Float32Array(0)
+      this.noiseFloor = 0.02
+      this.rmsHistory = []
+      this.adaptiveThreshold = this.options.vadThreshold!
 
       this.mediaRecorder = new MediaRecorder(this.stream, {
         mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
@@ -102,6 +148,7 @@ export class VoiceCapture {
       this.setState("listening")
       this.startVAD()
     } catch (err: any) {
+      micState.release(this.micUser)
       this.setState("error")
       this.options.onError?.(err.message || "Microphone access denied")
       throw err
@@ -110,43 +157,102 @@ export class VoiceCapture {
 
   private startVAD() {
     const bufferLength = this.analyser!.frequencyBinCount
-    const dataArray = new Uint8Array(bufferLength)
+    const timeData = new Uint8Array(bufferLength)
+    const freqData = new Uint8Array(bufferLength)
+    const sampleRate = this.audioContext!.sampleRate
+    const nyquist = sampleRate / 2
+    const speechBinLow = Math.floor((SPEECH_BAND_LOW / nyquist) * (bufferLength - 1))
+    const speechBinHigh = Math.ceil((SPEECH_BAND_HIGH / nyquist) * (bufferLength - 1))
+
+    const CONSECUTIVE_SPEECH_FRAMES = 3
+    const CONSECUTIVE_SILENCE_FRAMES = 6
+    let speechFrameCount = 0
+    let silenceFrameCount = 0
 
     const tick = () => {
-      this.analyser!.getByteTimeDomainData(dataArray)
+      this.analyser!.getByteTimeDomainData(timeData)
+      this.analyser!.getByteFrequencyData(freqData)
 
-      let sum = 0
+      let rmsSum = 0
       for (let i = 0; i < bufferLength; i++) {
-        const val = (dataArray[i] - 128) / 128
-        sum += val * val
+        const val = (timeData[i] - 128) / 128
+        rmsSum += val * val
       }
-      const rms = Math.sqrt(sum / bufferLength)
+      const rms = Math.sqrt(rmsSum / bufferLength)
 
-      const isSpeech = rms > this.options.vadThreshold!
+      let speechBandEnergy = 0
+      let totalEnergy = 0
+      for (let i = 0; i < bufferLength; i++) {
+        const energy = (freqData[i] / 255) ** 2
+        totalEnergy += energy
+        if (i >= speechBinLow && i <= speechBinHigh) {
+          speechBandEnergy += energy
+        }
+      }
+
+      const speechRatio = totalEnergy > 0 ? speechBandEnergy / totalEnergy : 0
+
+      this.updateNoiseFloor(rms)
+
+      const rmsDb = 20 * Math.log10(Math.max(rms, 1e-6))
+      const floorDb = 20 * Math.log10(Math.max(this.noiseFloor, 1e-6))
+      const snrEstimate = rmsDb - floorDb
+
+      this.currentRms = rms
+
+      let isSpeech: boolean
+
+      const gateThresholdDb = 20 * Math.log10(Math.max(this.options.noiseGateThreshold!, 1e-6))
+      if (rmsDb < gateThresholdDb) {
+        isSpeech = false
+      } else if (speechRatio > 0.35 && snrEstimate > 6) {
+        isSpeech = true
+      } else {
+        const hysteresisDb = this.isSpeaking ? -VAD_HYSTERESIS_DB : 0
+        const thresholdDb = 20 * Math.log10(Math.max(this.adaptiveThreshold, 1e-6)) + hysteresisDb
+        isSpeech = rmsDb > thresholdDb && speechRatio > 0.2
+      }
 
       if (isSpeech) {
-        this.lastSpeechTime = Date.now()
-        if (!this.isSpeaking) {
+        speechFrameCount++
+        silenceFrameCount = 0
+        if (speechFrameCount >= CONSECUTIVE_SPEECH_FRAMES && !this.isSpeaking) {
+          this.lastSpeechTime = Date.now()
           this.speechStartTime = Date.now()
           this.isSpeaking = true
           this.setState("speech")
-        }
-        if (this.silenceTimer) {
-          clearTimeout(this.silenceTimer)
-          this.silenceTimer = null
-        }
-      } else if (this.isSpeaking) {
-        const silenceDuration = Date.now() - this.lastSpeechTime
-        if (silenceDuration > this.options.maxPauseMs!) {
-          if (this.silenceTimer) clearTimeout(this.silenceTimer)
-          this.finalizeSpeech()
-        } else if (!this.silenceTimer && silenceDuration > this.options.vadHoldMs!) {
-          this.silenceTimer = setTimeout(() => {
-            if (Date.now() - this.lastSpeechTime >= this.options.maxPauseMs!) {
-              this.finalizeSpeech()
-            }
+          if (this.silenceTimer) {
+            clearTimeout(this.silenceTimer)
             this.silenceTimer = null
-          }, this.options.maxPauseMs! - silenceDuration)
+          }
+        }
+        if (this.isSpeaking) {
+          this.lastSpeechTime = Date.now()
+          if (this.silenceTimer) {
+            clearTimeout(this.silenceTimer)
+            this.silenceTimer = null
+          }
+        }
+      } else {
+        speechFrameCount = 0
+        silenceFrameCount++
+        if (this.isSpeaking && silenceFrameCount >= CONSECUTIVE_SILENCE_FRAMES) {
+          const silenceDuration = Date.now() - this.lastSpeechTime
+          if (silenceDuration > this.options.maxPauseMs!) {
+            if (this.silenceTimer) {
+              clearTimeout(this.silenceTimer)
+              this.silenceTimer = null
+            }
+            this.finalizeSpeech()
+          } else if (!this.silenceTimer && silenceDuration > this.options.vadHoldMs!) {
+            const remaining = this.options.maxPauseMs! - silenceDuration
+            this.silenceTimer = setTimeout(() => {
+              if (this.isSpeaking && Date.now() - this.lastSpeechTime >= this.options.maxPauseMs!) {
+                this.finalizeSpeech()
+              }
+              this.silenceTimer = null
+            }, remaining)
+          }
         }
       }
 
@@ -154,6 +260,26 @@ export class VoiceCapture {
     }
 
     this.animationId = requestAnimationFrame(tick)
+  }
+
+  private updateNoiseFloor(rms: number) {
+    this.rmsHistory.push(rms)
+    if (this.rmsHistory.length > this.RMS_HISTORY_SIZE) {
+      this.rmsHistory.shift()
+    }
+
+    if (!this.isSpeaking) {
+      this.noiseFloor = this.noiseFloor * (1 - NOISE_FLOOR_ALPHA) + rms * NOISE_FLOOR_ALPHA
+    }
+
+    const sorted = [...this.rmsHistory].sort((a, b) => a - b)
+    const p25 = sorted[Math.floor(sorted.length * 0.25)] || this.noiseFloor
+
+    this.adaptiveThreshold = Math.max(
+      p25 * 3.5,
+      this.noiseFloor * 2.5,
+      this.options.vadThreshold!
+    )
   }
 
   private async finalizeSpeech() {
@@ -229,13 +355,14 @@ export class VoiceCapture {
     if (this.stream) {
       this.stream.getTracks().forEach((t) => t.stop())
     }
+    micState.release(this.micUser)
     this.setState("idle")
     return null
   }
 
   destroy() {
     this.stop()
-    this.options = {}
+    this.options = {} as VoiceCaptureOptions
   }
 }
 
@@ -291,7 +418,7 @@ async function convertToWav(blob: Blob): Promise<Blob> {
 export function isVoiceCaptureSupported(): boolean {
   return !!(
     typeof window !== "undefined" &&
-    navigator.mediaDevices?.getUserMedia &&
+    typeof navigator.mediaDevices?.getUserMedia === "function" &&
     (window.AudioContext || (window as any).webkitAudioContext) &&
     typeof MediaRecorder !== "undefined"
   )

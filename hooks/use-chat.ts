@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { toast } from "@/hooks/use-toast"
 import type { AgentType, Message, ChatState, Conversation, ModelType, SendMessageOptions } from "@/types/chat"
+import { resolvePhonetic } from "@/lib/phonetic-resolver"
 import { ConversationStorage } from "@/lib/services/conversation-storage"
 
 /**
@@ -17,6 +18,7 @@ export function useChat() {
     connectionError: null,
     selectedModel: "local",
   })
+  const [isAgentSpeaking, setIsAgentSpeaking] = useState(false)
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.speechSynthesis) return
@@ -227,9 +229,13 @@ export function useChat() {
       // Slight volume boost for clarity on some browsers
       try { (utter as any).volume = 1 } catch { }
       try { synth.cancel() } catch { }
+      setIsAgentSpeaking(true)
+      utter.onend = () => setIsAgentSpeaking(false)
+      utter.onerror = () => setIsAgentSpeaking(false)
       synth.speak(utter)
     } catch (e) {
       console.error("Browser TTS error:", e)
+      setIsAgentSpeaking(false)
     }
   }
 
@@ -245,8 +251,10 @@ export function useChat() {
         try { if (window?.speechSynthesis) window.speechSynthesis.cancel() } catch { }
         try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { }
         const audio = new Audio(URL.createObjectURL(blob))
-        await audio.play().catch(() => playBrowserTTS(text, female, lang))
-        audio.addEventListener("ended", () => { try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { } })
+        audio.addEventListener("ended", () => { setIsAgentSpeaking(false); try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { } })
+        audio.addEventListener("error", () => setIsAgentSpeaking(false))
+        setIsAgentSpeaking(true)
+        await audio.play().catch(() => { setIsAgentSpeaking(false); return playBrowserTTS(text, female, lang) })
         return
       }
       toast({ title: "Audio de TTS no disponible", description: "Usando TTS del navegador como alternativa." })
@@ -317,7 +325,7 @@ export function useChat() {
         if (!res.ok) throw new Error(`Translation API error: ${res.status}`)
         const data = await res.json().catch(() => ({}))
         final = typeof data?.translatedText === "string" && data.translatedText.trim()
-          ? data.translatedText
+          ? resolvePhonetic(data.translatedText)
           : "Translation failed. Please try again."
       } else {
         const body: any = { prompt: content, model: state.selectedModel, history }
@@ -327,7 +335,7 @@ export function useChat() {
         const res = await fetch("/api/model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
         if (!res.ok) throw new Error(`Error en el endpoint interno: ${res.status}`)
         const data = await res.json().catch(() => ({}))
-        final = typeof data?.response === "string" && data.response.trim() ? cleanResponseText(data.response) : "Lo siento, no pude procesar tu solicitud. Por favor, intenta nuevamente."
+        final = typeof data?.response === "string" && data.response.trim() ? resolvePhonetic(cleanResponseText(data.response)) : "Lo siento, no pude procesar tu solicitud. Por favor, intenta nuevamente."
       }
 
       // Update bot message with final content but keep isTyping=true so the UI
@@ -365,5 +373,5 @@ export function useChat() {
   }, [state.isLoading, state.selectedModel, getCurrentConversation, updateCurrentConversation, setLoading, setConnectionError])
 
   const currentConversation = getCurrentConversation()
-  return { ...state, currentConversation, sendMessage, createNewConversation, switchConversation, deleteConversation, updateConversationTitle, setSelectedModel }
+  return { ...state, currentConversation, isAgentSpeaking, sendMessage, createNewConversation, switchConversation, deleteConversation, updateConversationTitle, setSelectedModel }
 }

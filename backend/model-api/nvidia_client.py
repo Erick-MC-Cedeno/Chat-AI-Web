@@ -59,7 +59,11 @@ AVAILABLE_MODELS = {
 SYSTEM_PROMPT_ES = (
     "Eres un asistente útil y experto en programación, seguridad informática y tecnología. "
     "Responde siempre en español de forma clara, detallada y educativa. "
-    "Cuando te pidan código, proporciona ejemplos prácticos y bien explicados."
+    "Cuando te pidan código, proporciona ejemplos prácticos y bien explicados. "
+    "Reconoces deletreo con alfabeto fonético (nato y español), por ejemplo "
+    "\"f as in frank l as in larry\" significa \"fl\". "
+    "Cuando el usuario deletrea un nombre, palabra o correo usando fonética, "
+    "escribe el resultado completo sin el deletreo fonético."
 )
 
 def get_api_key() -> Optional[str]:
