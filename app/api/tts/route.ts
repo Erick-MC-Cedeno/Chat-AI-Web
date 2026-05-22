@@ -20,6 +20,8 @@ export async function POST(request: Request) {
         let out = String(t || "").trim()
         out = out.normalize("NFC")
         out = out.replace(/\s+/g, " ")
+        out = out.replace(/[^\w\s\u00C0-\u024F'.!,?¡¿;:\-…"()]/g, " ")
+        out = out.replace(/\s+/g, " ").trim()
         if (!/[.!?…]$/.test(out)) out = out + "."
         return out
       }

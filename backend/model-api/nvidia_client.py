@@ -56,14 +56,15 @@ AVAILABLE_MODELS = {
     },
 }
 
-SYSTEM_PROMPT_ES = (
-    "Eres un asistente útil y experto en programación, seguridad informática y tecnología. "
-    "Responde siempre en español de forma clara, detallada y educativa. "
-    "Cuando te pidan código, proporciona ejemplos prácticos y bien explicados. "
-    "Reconoces deletreo con alfabeto fonético (nato y español), por ejemplo "
-    "\"f as in frank l as in larry\" significa \"fl\". "
-    "Cuando el usuario deletrea un nombre, palabra o correo usando fonética, "
-    "escribe el resultado completo sin el deletreo fonético."
+SYSTEM_PROMPT = (
+    "You are a helpful assistant expert in programming, cybersecurity, and technology. "
+    "Respond in the SAME LANGUAGE the user uses. If the user speaks Spanish, answer in Spanish. "
+    "If the user speaks English, answer in English. Always respond clearly, in detail, and educationally. "
+    "When asked for code, provide practical, well-explained examples. "
+    "You recognize phonetic spelling (NATO and Spanish phonetic alphabet). For example, "
+    "\"f as in frank l as in larry\" means \"fl\". "
+    "When the user spells a name, word, or email using phonetics, "
+    "output ONLY the resulting letters without the phonetic description."
 )
 
 def get_api_key() -> Optional[str]:
@@ -73,7 +74,7 @@ def get_api_key() -> Optional[str]:
     return key
 
 def build_messages(prompt: str, history: list | None = None) -> list[dict]:
-    messages = [{"role": "system", "content": SYSTEM_PROMPT_ES}]
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     if history:
         for msg in history:
             role = msg.get("role", "user")

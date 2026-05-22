@@ -138,15 +138,31 @@ export default function ChatbotUI() {
         </div>
 
         <div className="flex-shrink-0">
-          <ChatInput
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-            ttsEnabled={ttsEnabled}
-            onToggleTts={() => setTtsEnabled((v) => !v)}
-            recordingLang={selectedAgent === "interpreter" ? (sourceLang === "Spanish" ? "es-ES" : "en-US") : "es-ES"}
-            selectedModel={selectedModel}
-            agentSpeaking={isAgentSpeaking}
-          />
+          <div className={selectedAgent !== "chat" ? "hidden" : ""}>
+            <ChatInput
+              key="chat"
+              agentType="chat"
+              onSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              ttsEnabled={ttsEnabled}
+              onToggleTts={() => setTtsEnabled((v) => !v)}
+              selectedModel={selectedModel}
+              agentSpeaking={isAgentSpeaking}
+            />
+          </div>
+          <div className={selectedAgent !== "interpreter" ? "hidden" : ""}>
+            <ChatInput
+              key="interpreter"
+              agentType="interpreter"
+              onSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              ttsEnabled={ttsEnabled}
+              onToggleTts={() => setTtsEnabled((v) => !v)}
+              recordingLang={sourceLang === "Spanish" ? "es-ES" : "en-US"}
+              selectedModel={selectedModel}
+              agentSpeaking={isAgentSpeaking}
+            />
+          </div>
         </div>
       </div>
     </div>

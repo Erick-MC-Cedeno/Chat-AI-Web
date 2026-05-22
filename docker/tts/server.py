@@ -114,6 +114,8 @@ def preprocess_text(text: str, lang: str | None = None) -> str:
     out = str(text or "").strip()
     out = unicodedata.normalize("NFC", out)
     out = re.sub(r"\s+", " ", out)
+    out = re.sub(r"[^\w\s\u00C0-\u024F'.!,?¡¿;:\-…\"()]", " ", out)
+    out = re.sub(r"\s+", " ", out).strip()
     if not re.search(r"[.!?…]$", out):
         out += "."
     if lang and lang.lower().startswith("es"):

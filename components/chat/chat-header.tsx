@@ -147,7 +147,7 @@ export function ChatHeader({
 
       <div className="flex items-center gap-3">
         <Select value={selectedModel} onValueChange={(v) => onModelChange(v as ModelType)}>
-          <SelectTrigger className="w-auto min-w-[200px] h-10 px-3 border-border/60 bg-card/50 hover:bg-card/80 hover:border-border transition-all duration-200 rounded-xl shadow-sm">
+          <SelectTrigger className="w-auto min-w-[140px] h-9 px-2.5 border-border/60 bg-card/50 hover:bg-card/80 hover:border-border transition-all duration-200 rounded-xl shadow-sm">
             <SelectValue>
               <ModelTrigger value={selectedModel} />
             </SelectValue>

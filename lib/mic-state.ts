@@ -1,6 +1,6 @@
 "use client"
 
-export type MicUser = "chat" | "agent" | null
+export type MicUser = "chat" | "interpreter" | null
 
 let activeMic: MicUser = null
 const listeners: Array<(user: MicUser) => void> = []
