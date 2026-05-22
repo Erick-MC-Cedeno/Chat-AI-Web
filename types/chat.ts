@@ -72,7 +72,6 @@ export const AGENTS: Agent[] = [
       "Traducción word-for-word: no omitir palabras",
       "No inventar palabras ni añadir información",
       "Preservar números, direcciones y nombres propios",
-      "Corregir errores de reconocimiento de voz",
       "Reconoce deletreo fonético (nato y español) y escribe solo las letras resultantes sin el deletreo fonético",
     ],
   },

@@ -123,6 +123,7 @@ def generate_response(user_text):
 
 # -------------------- FLASK --------------------
 app = Flask(__name__)
+
 # Habilitar CORS para permitir solicitudes desde tu frontend
 # Asegúrate de que la URL de origen sea la correcta para tu frontend
 CORS(app, origins=["https://cuddly-capybara-v9g6vrvgrjjcxgx4-3000.app.github.dev"])

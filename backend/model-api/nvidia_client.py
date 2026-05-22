@@ -137,3 +137,5 @@ def nvidia_chat(
     except Exception as e:
         logger.exception(f"Unexpected NVIDIA API error for {model_id}: {e}")
         return None
+
+

@@ -12,19 +12,22 @@ const MODEL_MAP: Record<string, string> = {
   "nvidia-mistral": "mistralai/mistral-small-4-119b-2603",
 }
 
+const MODEL_CONFIG: Record<string, { max_tokens: number; top_p: number; temperature: number }> = {
+  "nvidia-llama":       { max_tokens: 8192,  top_p: 0.9, temperature: 0.1 },
+  "nvidia-nemotron":    { max_tokens: 8192,  top_p: 0.9, temperature: 0.1 },
+  "nvidia-kimi":        { max_tokens: 16384, top_p: 0.9, temperature: 0.1 },
+  "nvidia-gpt-oss":     { max_tokens: 8192,  top_p: 0.9, temperature: 0.1 },
+  "nvidia-gpt-oss-120b": { max_tokens: 16384, top_p: 0.9, temperature: 0.1 },
+  "nvidia-glm":         { max_tokens: 8192,  top_p: 0.9, temperature: 0.1 },
+  "nvidia-mistral":     { max_tokens: 32768, top_p: 0.9, temperature: 0.1 },
+}
+
 const DEFAULT_MODEL = "meta/llama-3.1-8b-instruct"
+const DEFAULT_CONFIG = { max_tokens: 4096, top_p: 0.9, temperature: 0.1 }
 
-const SYSTEM_PROMPT = `You are "Interpreter Mode", a specialized AI translation and speech-repair agent.
+const SYSTEM_PROMPT = `You are "Interpreter Mode", a specialized AI translation agent.
 
-Your ONLY task is to translate text between English and Spanish. The input may come from speech recognition and may contain errors.
-
-SPEECH REPAIR RULES (apply before translating):
-- Fix incomplete or cut-off words using context.
-- Correct phonetically similar words (homophone errors like "their/there/they're", "hear/here").
-- Restore missing punctuation and capitalization.
-- Fix run-together words.
-- Remove artifacts like repeated words or partial syllables.
-- DO NOT add new information or rephrase creatively.
+Your ONLY task is to translate text between English and Spanish.
 
 TRANSLATION RULES:
 - WORD-FOR-WORD: Translate every single word. Do NOT omit any word from the original.
@@ -43,11 +46,15 @@ TRANSLATION RULES:
 
 SUPPORTED LANGUAGES:
 - English
-- Spanish
+- Spanish (Latin American dialect)
+
+DIALECT: When translating to Spanish, ALWAYS use Latin American / Mexican Spanish (es-MX). Use "computadora", "carro", "jugo", "manejar", "piso" (apartment), "bolígrafo/pluma", "cobrar", etc. Avoid Spain-specific vocabulary like "ordenador", "coche", "zumo", "conducir", "piso" (floor (Br) / apartment (Am)), "vale", "tío/tía". Use "ustedes" for plural "you" instead of "vosotros".
+
+When translating to English, ALWAYS use American English (en-US). Use US spelling ("color", "center", "traveling", "realize", "apartment", "elevator", "truck", "sidewalk", "trash", "vacation", "fall", "movie", "soccer"), US phrasing, and US cultural references. Avoid British English spellings ("colour", "centre", "travelling", "realise", "flat", "lift", "lorry", "pavement", "rubbish", "holiday", "autumn", "film", "football").
 
 You also recognize phonetic spelling (NATO and Spanish phonetic alphabet). For example, "f as in frank l as in larry" means "fl". When the user spells a name, word, or email using phonetics, resolve it and output ONLY the resulting letters with NO phonetic description at all. Never include the phonetic words in your response.
 
-You are a translation and speech-repair engine only.`
+You are a translation engine only.`
 
 function getApiKey(): string | null {
   return process.env.NVIDIA_API_KEY || null
@@ -71,7 +78,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unsupported language pair." }, { status: 400 })
     }
 
+    if (modelKey === "local") {
+      return NextResponse.json({ error: "El modelo local no soporta traducción. Selecciona un modelo NVIDIA." }, { status: 400 })
+    }
+
     const nvidiaModel = MODEL_MAP[modelKey] || DEFAULT_MODEL
+    const config = MODEL_CONFIG[modelKey] || DEFAULT_CONFIG
     const userPrompt = `Translate from ${source_language} to ${target_language}:\n\n${text}`
 
     const response = await fetch(`${NVIDIA_API_BASE}/chat/completions`, {
@@ -86,8 +98,9 @@ export async function POST(request: NextRequest) {
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.1,
-        max_tokens: 4096,
+        temperature: config.temperature,
+        max_tokens: config.max_tokens,
+        top_p: config.top_p,
       }),
     })
 

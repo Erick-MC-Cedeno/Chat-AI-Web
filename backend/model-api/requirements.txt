@@ -6,4 +6,5 @@ scikit-learn
 numpy
 spacy
 dotenv
+requests
 es-core-news-sm @ https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.7.0/es_core_news_sm-3.7.0-py3-none-any.whl

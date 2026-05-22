@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Send, Loader2, Mic, MicOff, Volume2, VolumeX, Sparkles } from "lucide-react"
+import { Send, Loader2, Mic, MicOff, Volume2, VolumeX } from "lucide-react"
 import { micState } from "@/lib/mic-state"
-import { VoiceCapture, isVoiceCaptureSupported } from "@/lib/voice-capture"
 
 interface ChatInputProps {
   onSendMessage: (message: string, options?: import("@/types/chat").SendMessageOptions) => void
@@ -23,10 +22,11 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const [inputValue, setInputValue] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [audioLevel, setAudioLevel] = useState(0)
-  const [isAiProcessing, setIsAiProcessing] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(false)
+  const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedMicId, setSelectedMicId] = useState<string>("")
+  const micInitRef = useRef(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const captureRef = useRef<VoiceCapture | null>(null)
   const recognitionRef = useRef<any>(null)
   const isRecordingRef = useRef(false)
   const lastFinalRef = useRef<{ text: string; time: number }>({ text: "", time: 0 })
@@ -34,16 +34,34 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const inputValueRef = useRef("")
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null)
   const levelIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const aiPendingRef = useRef(false)
   const micStreamRef = useRef<MediaStream | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const animFrameRef = useRef<number | null>(null)
-  const voiceCaptureSupported = useRef(false)
+
+  const enumerateMics = useCallback(async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const audioInputs = devices.filter((d) => d.kind === "audioinput")
+      setMicDevices(audioInputs)
+      if (audioInputs.length > 0 && !micInitRef.current) {
+        micInitRef.current = true
+        setSelectedMicId(audioInputs[0].deviceId)
+      }
+    } catch {}
+  }, [])
 
   useEffect(() => {
-    voiceCaptureSupported.current = isVoiceCaptureSupported()
-    setSpeechSupported(isSpeechRecognitionSupported() || voiceCaptureSupported.current)
+    enumerateMics()
+    const handler = () => enumerateMics()
+    navigator.mediaDevices?.addEventListener("devicechange", handler)
+    return () => {
+      navigator.mediaDevices?.removeEventListener("devicechange", handler)
+    }
+  }, [enumerateMics])
+
+  useEffect(() => {
+    setSpeechSupported(isSpeechRecognitionSupported())
   }, [])
 
   useEffect(() => {
@@ -63,7 +81,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
 
   const handleSendMessage = useCallback(() => {
     clearAutoSendTimer()
-    if (!inputValue.trim() || isLoading || isAiProcessing) return
+    if (!inputValue.trim() || isLoading) return
     onSendMessage(inputValue, { ttsFemale: ttsEnabled })
     setInputValue("")
     inputValueRef.current = ""
@@ -73,11 +91,15 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
       stopAllRecording()
     }
     inputRef.current?.focus()
-  }, [inputValue, isLoading, isAiProcessing, onSendMessage, ttsEnabled, isRecording])
+  }, [inputValue, isLoading, onSendMessage, ttsEnabled, isRecording])
 
   const startRealAudioAnalysis = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const constraints: MediaStreamConstraints = { audio: true }
+      if (selectedMicId) {
+        constraints.audio = { deviceId: { exact: selectedMicId } }
+      }
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
       micStreamRef.current = stream
       const audioContext = new AudioContext()
       audioContextRef.current = audioContext
@@ -108,7 +130,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     } catch {
       startFakeAnimation()
     }
-  }, [])
+  }, [selectedMicId])
 
   const startFakeAnimation = () => {
     if (levelIntervalRef.current) clearInterval(levelIntervalRef.current)
@@ -137,25 +159,10 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     setAudioLevel(0)
   }, [])
 
-  const pollVoiceCaptureLevel = useCallback(() => {
-    if (levelIntervalRef.current) clearInterval(levelIntervalRef.current)
-    levelIntervalRef.current = setInterval(() => {
-      const capture = captureRef.current
-      if (capture) {
-        setAudioLevel(capture.getAudioLevel())
-      }
-    }, 60)
-  }, [])
-
   useEffect(() => {
     return () => {
       micState.release("chat")
       stopAudioAnalysis()
-      const capture = captureRef.current
-      if (capture) {
-        capture.destroy()
-        captureRef.current = null
-      }
       const recognition = recognitionRef.current
       if (recognition) {
         try { recognition.abort() } catch {}
@@ -165,11 +172,6 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   }, [stopAudioAnalysis])
 
   const stopAllRecording = useCallback(() => {
-    const capture = captureRef.current
-    if (capture) {
-      capture.stop()
-      captureRef.current = null
-    }
     const recognition = recognitionRef.current
     if (recognition) {
       recognition.onend = null
@@ -183,32 +185,6 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     setIsRecording(false)
     stopAudioAnalysis()
   }, [stopAudioAnalysis])
-
-  const processWithAI = useCallback(async (text: string) => {
-    if (!text.trim() || aiPendingRef.current) return
-    aiPendingRef.current = true
-    setIsAiProcessing(true)
-    let finalText = text
-    try {
-      const langCode = recordingLang ? recordingLang.split("-")[0] : undefined
-      const res = await fetch("/api/repair-speech", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, lang: langCode }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data?.correctedText && data.correctedText.trim()) {
-          finalText = data.correctedText
-        }
-      }
-    } catch {
-    } finally {
-      setIsAiProcessing(false)
-      aiPendingRef.current = false
-    }
-    return finalText
-  }, [recordingLang])
 
   const initRecognition = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -319,47 +295,6 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     setIsRecording(true)
     isRecordingRef.current = true
 
-    if (voiceCaptureSupported.current) {
-      try {
-        const capture = new VoiceCapture({
-          lang: recordingLang ? recordingLang.split("-")[0] : "es",
-          micUser: "chat",
-          noiseGateThreshold: 0.012,
-          vadThreshold: 0.03,
-          vadHoldMs: 500,
-          minSpeechMs: 300,
-          maxPauseMs: 1200,
-          onTranscript: async (text: string) => {
-            const repaired = await processWithAI(text)
-            setInputValue((prev) => {
-              const sep = prev ? " " : ""
-              const newVal = `${prev}${sep}${repaired || text}`
-              inputValueRef.current = newVal
-              committedTextRef.current = newVal
-              return newVal
-            })
-            inputRef.current?.focus()
-          },
-          onError: (err) => {
-            console.warn("VoiceCapture error:", err)
-          },
-          onStateChange: (state) => {
-            if (state === "error") {
-              setSpeechSupported(false)
-            }
-          },
-        })
-        captureRef.current = capture
-        await capture.start()
-        pollVoiceCaptureLevel()
-        inputRef.current?.focus()
-        return
-      } catch (err) {
-        console.warn("VoiceCapture failed, falling back to browser SpeechRecognition:", err)
-        captureRef.current = null
-      }
-    }
-
     startRealAudioAnalysis()
     initRecognition()
     const recognition = recognitionRef.current
@@ -379,17 +314,11 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
       isRecordingRef.current = false
       stopAudioAnalysis()
     }
-  }, [initRecognition, clearAutoSendTimer, startRealAudioAnalysis, agentSpeaking, recordingLang, processWithAI, pollVoiceCaptureLevel])
+  }, [initRecognition, clearAutoSendTimer, startRealAudioAnalysis, agentSpeaking])
 
   const stopRecording = useCallback(async () => {
     clearAutoSendTimer()
-    const capture = captureRef.current
-    if (capture) {
-      capture.stop()
-      captureRef.current = null
-    }
     stopAudioAnalysis()
-    const currentText = inputValueRef.current
     micState.release("chat")
     setIsRecording(false)
     isRecordingRef.current = false
@@ -429,7 +358,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
                 if (isRecording) stopRecording()
                 else startRecording()
               }}
-              disabled={isLoading || !speechSupported || agentSpeaking}
+              disabled={isLoading || (!isRecording && (!speechSupported || agentSpeaking))}
               aria-label={isRecording ? "Detener grabación" : "Iniciar grabación"}
               className="relative h-9 w-9 rounded-full flex items-center justify-center transition-transform duration-200 shrink-0"
               style={{ transform: `scale(${micButtonScale})` }}
@@ -503,13 +432,12 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
                 }
               }}
               placeholder={
-                isAiProcessing ? "Completando con IA..." :
                 isRecording ? (inputValue ? "" : "Escuchando...") :
                 isLoading ? "Procesando..." :
                 agentSpeaking ? "El agente está hablando..." :
                 "Envía un mensaje..."
               }
-              disabled={isLoading || isAiProcessing || agentSpeaking}
+              disabled={isLoading || agentSpeaking}
               rows={1}
               className="hide-scrollbar flex-1 min-w-0 w-full py-3 px-1 text-sm bg-transparent border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 shadow-none resize-none outline-none"
               style={{ maxHeight: "200px", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
@@ -526,19 +454,15 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading || isAiProcessing || agentSpeaking}
+            disabled={!inputValue.trim() || isLoading || agentSpeaking}
             aria-label="Enviar mensaje"
             className={`mr-1.5 h-8 w-8 rounded-full flex items-center justify-center shadow-sm shrink-0 ${
-              isAiProcessing
-                ? "bg-amber-500 hover:bg-amber-600"
-                : isRecording
-                  ? "bg-violet-500 hover:bg-violet-600 disabled:opacity-40"
-                  : "bg-primary hover:bg-primary/80 disabled:opacity-40"
+              isRecording
+                ? "bg-violet-500 hover:bg-violet-600 disabled:opacity-40"
+                : "bg-primary hover:bg-primary/80 disabled:opacity-40"
             } disabled:cursor-not-allowed`}
           >
-            {isAiProcessing ? (
-              <Sparkles className="h-4 w-4 text-white animate-pulse" />
-            ) : isLoading ? (
+            {isLoading ? (
               <Loader2 className="h-4 w-4 text-primary-foreground animate-spin" />
             ) : (
               <Send className={`h-4 w-4 ${isRecording ? "text-white" : "text-primary-foreground"}`} />
