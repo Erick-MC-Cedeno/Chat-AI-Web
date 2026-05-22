@@ -38,6 +38,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const animFrameRef = useRef<number | null>(null)
+  const warmupLangRef = useRef<string>("")
 
   const enumerateMics = useCallback(async () => {
     try {
@@ -71,6 +72,29 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
       el.style.height = Math.min(el.scrollHeight, 200) + "px"
     }
   }, [inputValue])
+
+  useEffect(() => {
+    const lang = recordingLang
+    if (!lang || !isSpeechRecognitionSupported()) return
+
+    const warmUp = () => {
+      if (warmupLangRef.current === lang) return
+      warmupLangRef.current = lang
+      try {
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+        if (!SR) return
+        const r = new SR()
+        r.lang = lang
+        r.interimResults = true
+        r.continuous = true
+        r.onstart = () => { try { r.abort() } catch {} }
+        r.start()
+      } catch {}
+    }
+
+    document.addEventListener("pointerdown", warmUp, { once: true })
+    return () => document.removeEventListener("pointerdown", warmUp)
+  }, [recordingLang])
 
   const clearAutoSendTimer = () => {
     if (autoSendTimerRef.current) {
