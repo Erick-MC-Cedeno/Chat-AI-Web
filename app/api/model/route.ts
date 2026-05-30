@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
 // Configuración: leer desde variables de entorno para facilitar despliegues
-const FLASK_URL = process.env.FLASK_URL || "https://congenial-couscous-45gj7v7gvgwfjqp-4000.app.github.dev"
+const FLASK_URL = process.env.FLASK_URL || "https://ideal-chainsaw-45gj7v7g6xphqwwx-4000.app.github.dev"
 const FLASK_CHAT_PATH = process.env.FLASK_CHAT_PATH || "/chat"
 const FLASK_TIMEOUT_MS = Number(process.env.FLASK_TIMEOUT_MS) || 10000
 

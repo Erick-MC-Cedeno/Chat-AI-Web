@@ -253,10 +253,21 @@ export function useChat() {
         try { if (window?.speechSynthesis) window.speechSynthesis.cancel() } catch { }
         try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { }
         const audio = new Audio(URL.createObjectURL(blob))
-        audio.addEventListener("ended", () => { setIsAgentSpeaking(false); try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { } })
-        audio.addEventListener("error", () => setIsAgentSpeaking(false))
+        
+        const handleEnded = () => { setIsAgentSpeaking(false); try { (window as any).__lastServerTtsPlayedAt = Date.now() } catch { } }
+        const handleError = () => setIsAgentSpeaking(false)
+        
+        audio.addEventListener("ended", handleEnded)
+        audio.addEventListener("error", handleError)
         setIsAgentSpeaking(true)
-        await audio.play().catch(() => { setIsAgentSpeaking(false); return playBrowserTTS(text, female, lang) })
+        
+        try {
+          await audio.play().catch(() => { setIsAgentSpeaking(false); return playBrowserTTS(text, female, lang) })
+        } finally {
+          audio.removeEventListener("ended", handleEnded)
+          audio.removeEventListener("error", handleError)
+          URL.revokeObjectURL(audio.src)
+        }
         return
       }
       toast({ title: "Audio de TTS no disponible", description: "Usando TTS del navegador como alternativa." })

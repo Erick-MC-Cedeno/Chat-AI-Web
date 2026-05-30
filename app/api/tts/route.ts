@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export async function POST(request: Request) {
   const TTS_PROVIDER = (process.env.TTS_PROVIDER || "coqui").toLowerCase()
-  const TTS_ENDPOINT = process.env.TTS_ENDPOINT || "http://localhost:5002/api/tts"
+  const TTS_ENDPOINT = process.env.TTS_ENDPOINT || "https://ideal-chainsaw-45gj7v7g6xphqwwx-5002.app.github.dev/api/tts"
   const TTS_VOICE = process.env.TTS_VOICE || "multilingual"
   const TTS_MODEL = process.env.TTS_MODEL || process.env.TTS_VOICE_MODEL || null
 
