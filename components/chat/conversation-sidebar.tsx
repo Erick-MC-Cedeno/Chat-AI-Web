@@ -6,13 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, MessageSquare, MoreVertical, Trash2, Edit3, Check, X, Menu, ChevronLeft } from "lucide-react"
-import type { Conversation } from "@/types/chat"
+import { Plus, MessageSquare, MoreVertical, Trash2, Edit3, Check, X, Menu, ChevronLeft, Bot, BookOpenText } from "lucide-react"
+import type { Conversation, AgentType } from "@/types/chat"
+import { AGENTS } from "@/types/chat"
 
 interface ConversationSidebarProps {
   conversations: Conversation[]
   currentConversationId: string | null
-  // Allow passing an optional title when creating a new conversation
+  selectedAgent?: AgentType
+  onSelectAgent?: (agent: AgentType) => void
   onNewConversation: (title?: string) => void
   onSwitchConversation: (id: string) => void
   onDeleteConversation: (id: string) => void
@@ -21,9 +23,13 @@ interface ConversationSidebarProps {
   onToggleCollapse: () => void
 }
 
+const AGENT_ICONS: Record<string, React.ElementType> = { Bot, BookOpenText }
+
 export function ConversationSidebar({
   conversations,
   currentConversationId,
+  selectedAgent,
+  onSelectAgent,
   onNewConversation,
   onSwitchConversation,
   onDeleteConversation,
@@ -102,6 +108,22 @@ export function ConversationSidebar({
         </div>
       </CardHeader>
 
+      {selectedAgent && onSelectAgent && (() => {
+        const other = AGENTS.find((a) => a.id !== selectedAgent)
+        if (!other) return null
+        const Icon = AGENT_ICONS[other.icon] || Bot
+        return (
+          <div className="px-3 pb-3">
+            <button
+              onClick={() => onSelectAgent(other.id)}
+              className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 border border-dashed border-border/40 transition-all duration-200"
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{other.name}</span>
+            </button>
+          </div>
+        )
+      })()}
       <CardContent className="p-0 flex-1 flex flex-col min-h-0">
         <ScrollArea className="flex-1 min-h-0">
           <div className="p-2 divide-y divide-border/30">

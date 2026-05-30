@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
 import { ConversationSidebar } from "./conversation-sidebar"
-import type { Conversation } from "@/types/chat"
+import type { Conversation, AgentType } from "@/types/chat"
 
 interface MobileSidebarToggleProps {
   conversations: Conversation[]
   currentConversationId: string | null
+  selectedAgent?: AgentType
+  onSelectAgent?: (agent: AgentType) => void
   onNewConversation: (title?: string) => void
   onSwitchConversation: (id: string) => void
   onDeleteConversation: (id: string) => void
@@ -18,6 +20,8 @@ interface MobileSidebarToggleProps {
 export function MobileSidebarToggle({
   conversations,
   currentConversationId,
+  selectedAgent,
+  onSelectAgent,
   onNewConversation,
   onSwitchConversation,
   onDeleteConversation,
@@ -34,6 +38,8 @@ export function MobileSidebarToggle({
         <ConversationSidebar
           conversations={conversations}
           currentConversationId={currentConversationId}
+          selectedAgent={selectedAgent}
+          onSelectAgent={onSelectAgent}
           onNewConversation={onNewConversation}
           onSwitchConversation={onSwitchConversation}
           onDeleteConversation={onDeleteConversation}

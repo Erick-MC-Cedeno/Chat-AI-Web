@@ -51,31 +51,32 @@ export interface Agent {
   skills?: string[]
 }
 
-export const AGENTS: Agent[] = [
-  {
-    id: "chat",
-    name: "Chat Mode",
-    description: "General AI Assistant",
-    icon: "Bot",
-    gradient: "from-blue-500 to-purple-600",
-    skills: [
-      "Reconoce el alfabeto fonético (nato y español) y escribe solo las letras resultantes sin el deletreo fonético",
-    ],
-  },
-  {
-    id: "interpreter",
-    name: "Interpreter Mode",
-    description: "AI Translation Specialist",
-    icon: "BookOpenText",
-    gradient: "from-emerald-500 to-teal-600",
-    skills: [
-      "Traducción word-for-word: no omitir palabras",
-      "No inventar palabras ni añadir información",
-      "Preservar números, direcciones y nombres propios",
-      "Reconoce deletreo fonético (nato y español) y escribe solo las letras resultantes sin el deletreo fonético",
-    ],
-  },
-]
+export const CHAT_AGENT: Agent = {
+  id: "chat",
+  name: "Chat Mode",
+  description: "General AI Assistant",
+  icon: "Bot",
+  gradient: "from-blue-500 to-purple-600",
+  skills: [
+    "Reconoce el alfabeto fonético (nato y español) y escribe solo las letras resultantes sin el deletreo fonético",
+  ],
+}
+
+export const INTERPRETER_AGENT: Agent = {
+  id: "interpreter",
+  name: "Interpreter Mode",
+  description: "AI Translation Specialist",
+  icon: "BookOpenText",
+  gradient: "from-emerald-500 to-teal-600",
+  skills: [
+    "Traducción word-for-word: no omitir palabras",
+    "No inventar palabras ni añadir información",
+    "Preservar números, direcciones y nombres propios",
+    "Reconoce deletreo fonético (nato y español) y escribe solo las letras resultantes sin el deletreo fonético",
+  ],
+}
+
+export const AGENTS: Agent[] = [CHAT_AGENT, INTERPRETER_AGENT]
 
 export interface TranslationConfig {
   source_language: string

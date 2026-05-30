@@ -34,6 +34,8 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   const lastFinalRef = useRef<{ text: string; time: number }>({ text: "", time: 0 })
   const committedTextRef = useRef("")
   const inputValueRef = useRef("")
+  const [typingPlaceholder, setTypingPlaceholder] = useState("")
+  const [isExpanded, setIsExpanded] = useState(false)
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null)
   const levelIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
@@ -71,12 +73,32 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
     const el = inputRef.current
     if (el) {
       el.style.height = "auto"
-      el.style.height = Math.min(el.scrollHeight, 200) + "px"
+      const h = Math.min(el.scrollHeight, 200)
+      el.style.height = h + "px"
+      setIsExpanded(h > 56)
     }
   }, [inputValue])
 
   const recordingLangRef = useRef(recordingLang)
   useEffect(() => { recordingLangRef.current = recordingLang }, [recordingLang])
+
+  useEffect(() => {
+    const msg = "Envía un mensaje..."
+    let i = 0
+    let dir: 1 | -1 = 1
+    let timer: NodeJS.Timeout
+
+    const tick = () => {
+      i += dir
+      if (i > msg.length) { i = msg.length; dir = -1; timer = setTimeout(tick, 2000); return }
+      if (i < 0) { i = 0; dir = 1; timer = setTimeout(tick, 1000); return }
+      setTypingPlaceholder(msg.slice(0, i))
+      timer = setTimeout(tick, 60)
+    }
+
+    timer = setTimeout(tick, 800)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     const lang = recordingLang
@@ -371,7 +393,7 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
   return (
     <div className="w-full">
       <div className="max-w-xl mx-auto border-t border-border/60 bg-background px-4 pb-4 pt-2">
-        <div className={`relative flex items-center rounded-2xl shadow-sm transition-all duration-300 overflow-hidden ${
+        <div className={`relative flex ${isExpanded ? 'items-end' : 'items-center'} py-1.5 rounded-2xl shadow-sm transition-all duration-300 overflow-hidden ${
           isRecording
             ? "bg-violet-500/5 border border-violet-500/30 shadow-[0_0_15px_-3px_rgba(139,92,246,0.15)]"
             : "bg-muted/40 border border-border/40 focus-within:border-border/70 focus-within:shadow-[0_0_0_1px_rgba(255,255,255,0.03)]"
@@ -383,69 +405,73 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
             </div>
           )}
 
-          <div className="flex items-center gap-1 ml-1.5">
-            <button
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                if (!speechSupported) return
-                if (isRecording) stopRecording()
-                else startRecording()
-              }}
-              disabled={isLoading || (!isRecording && (!speechSupported || agentSpeaking))}
-              aria-label={isRecording ? "Detener grabación" : "Iniciar grabación"}
-              className="relative h-9 w-9 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 active:scale-90"
-              style={{ transform: `scale(${micButtonScale})` }}
-            >
-              {isRecording ? (
-                <>
-                  <span className="absolute inset-0 rounded-full animate-ping bg-violet-500/20" />
-                  <span className="absolute inset-0 rounded-full bg-violet-500/30" />
-                  <MicOff className="h-4 w-4 text-white relative z-10" />
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-white rounded-full animate-pulse" />
-                </>
-              ) : (
-                <span className="text-muted-foreground hover:text-foreground hover:bg-muted/60 active:bg-muted/80 h-8 w-8 rounded-full flex items-center justify-center transition-all duration-150">
-                  <Mic className="h-4 w-4" />
-                </span>
-              )}
-            </button>
+          <div className="flex items-center gap-0 ml-2">
+            <div className="flex items-center gap-0">
+              <button
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  if (!speechSupported) return
+                  if (isRecording) stopRecording()
+                  else startRecording()
+                }}
+                disabled={isLoading || (!isRecording && (!speechSupported || agentSpeaking))}
+                aria-label={isRecording ? "Detener grabación" : "Iniciar grabación"}
+                className="relative h-9 w-9 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 active:scale-90"
+                style={{ transform: `scale(${micButtonScale})` }}
+              >
+                {isRecording ? (
+                  <>
+                    <span className="absolute inset-0 rounded-full animate-ping bg-violet-500/20" />
+                    <span className="absolute inset-0 rounded-full bg-violet-500/30" />
+                    <MicOff className="h-4 w-4 text-white relative z-10" />
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-white rounded-full animate-pulse" />
+                  </>
+                ) : (
+                  <span className="text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 bg-muted/20 active:bg-muted/70 active:scale-90 h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200">
+                    <Mic className="h-4 w-4" />
+                  </span>
+                )}
+              </button>
 
-            <div className={`flex items-end gap-[2px] h-5 w-7 ${isRecording ? '' : 'invisible'}`}>
-                {[0, 1, 2, 3, 4].map((i) => {
-                  const barHeight = Math.max(3, audioLevel * 22 * (1 + Math.sin(i * 1.2) * 0.3) + 3)
-                  const colors = [
-                    'bg-violet-400/60',
-                    'bg-violet-400/85',
-                    'bg-purple-400',
-                    'bg-violet-400/85',
-                    'bg-violet-400/60'
-                  ]
-                  return (
-                    <span
-                      key={i}
-                      className={`w-[3px] rounded-full transition-all duration-200 ease-out ${colors[i]}`}
-                      style={{
-                        height: `${barHeight}px`,
-                        transitionDelay: `${i * 25}ms`,
-                      }}
-                    />
-                  )
-                })}
-              </div>
+              <div className={`flex items-end gap-[2px] h-5 w-7 ${isRecording ? '' : 'hidden'}`}>
+                  {[0, 1, 2, 3, 4].map((i) => {
+                    const barHeight = Math.max(3, audioLevel * 22 * (1 + Math.sin(i * 1.2) * 0.3) + 3)
+                    const colors = [
+                      'bg-violet-400/60',
+                      'bg-violet-400/85',
+                      'bg-purple-400',
+                      'bg-violet-400/85',
+                      'bg-violet-400/60'
+                    ]
+                    return (
+                      <span
+                        key={i}
+                        className={`w-[3px] rounded-full transition-all duration-200 ease-out ${colors[i]}`}
+                        style={{
+                          height: `${barHeight}px`,
+                          transitionDelay: `${i * 25}ms`,
+                        }}
+                      />
+                    )
+                  })}
+                </div>
+            </div>
+
+            <button
+              onClick={onToggleTts}
+              disabled={isLoading || agentSpeaking}
+              aria-label={ttsEnabled ? "Desactivar voz del bot" : "Activar voz del bot"}
+              className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 shrink-0 active:scale-90 ${
+                ttsEnabled
+                  ? "bg-blue-500/90 text-white shadow-sm hover:bg-blue-500 hover:shadow-[0_0_10px_-2px_rgba(59,130,246,0.35)]"
+                  : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 bg-muted/20 active:bg-muted/70"
+              }`}
+            >
+              {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </button>
           </div>
 
-          <button
-            onClick={onToggleTts}
-            disabled={isLoading || agentSpeaking}
-            aria-label={ttsEnabled ? "Desactivar voz del bot" : "Activar voz del bot"}
-            className={`ml-0.5 h-8 w-8 rounded-full flex items-center justify-center transition-all duration-150 shrink-0 active:scale-90 ${
-              ttsEnabled
-                ? "bg-blue-500/90 text-white shadow-sm hover:bg-blue-500 hover:shadow-[0_0_10px_-2px_rgba(59,130,246,0.35)]"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/60 active:bg-muted/80"
-            }`}
-          >
-            {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-          </button>
+          <div className="w-px h-6 bg-border/40 shrink-0 mx-1" />
 
           <div className="flex-1 relative">
             <style>{`textarea.hide-scrollbar::-webkit-scrollbar { display: none }`}</style>
@@ -456,7 +482,9 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
                 setInputValue(e.target.value)
                 const el = e.target
                 el.style.height = "auto"
-                el.style.height = Math.min(el.scrollHeight, 200) + "px"
+                const h = Math.min(el.scrollHeight, 200)
+                el.style.height = h + "px"
+                setIsExpanded(h > 56)
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -468,13 +496,19 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
                 isRecording ? (inputValue ? "" : "Escuchando...") :
                 isLoading ? "Procesando..." :
                 agentSpeaking ? "El agente está hablando..." :
-                "Envía un mensaje..."
+                " "
               }
               disabled={isLoading || agentSpeaking}
               rows={1}
               className="hide-scrollbar flex-1 min-w-0 w-full py-3 px-1 text-sm bg-transparent border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 shadow-none resize-none outline-none transition-[height] duration-150 ease-out"
               style={{ maxHeight: "200px", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
             />
+            {!inputValue && !isRecording && !isLoading && !agentSpeaking && (
+              <span className="absolute left-1 top-1/2 -translate-y-1/2 text-muted-foreground/50 text-sm pointer-events-none flex items-center gap-0">
+                <span className="overflow-hidden whitespace-nowrap">{typingPlaceholder}</span>
+                <span className="w-[2px] h-[14px] bg-muted-foreground/50 ml-[1px] animate-pulse" />
+              </span>
+            )}
             {isRecording && (
               <span className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity duration-300 ${inputValue ? 'opacity-0' : 'opacity-100'}`}>
                 <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-violet-400 [animation-duration:1s]" />
@@ -484,12 +518,14 @@ export function ChatInput({ onSendMessage, isLoading, ttsEnabled = false, onTogg
             )}
           </div>
 
+          <div className="w-px h-6 bg-border/40 shrink-0 mx-1" />
+
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isLoading || agentSpeaking}
             aria-label="Enviar mensaje"
-            className={`mr-1.5 h-8 w-8 rounded-full flex items-center justify-center shadow-sm shrink-0 transition-all duration-150 active:scale-90 ${
+            className={`mr-2 h-9 w-9 rounded-xl flex items-center justify-center shadow-sm shrink-0 transition-all duration-200 active:scale-90 ${
               isRecording
                 ? "bg-violet-500 hover:bg-violet-600 hover:shadow-[0_0_12px_-2px_rgba(139,92,246,0.4)] disabled:opacity-40 disabled:hover:shadow-none disabled:active:scale-100"
                 : "bg-primary hover:bg-primary/80 hover:shadow-[0_0_12px_-2px_rgba(59,130,246,0.3)] disabled:opacity-40 disabled:hover:shadow-none disabled:active:scale-100"

@@ -3,15 +3,17 @@
 import { MobileSidebarToggle } from "./mobile-sidebar-toggle"
 import { ConnectionStatus } from "./connection-status"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bot, Cpu, Sparkles, Languages, ArrowLeftRight } from "lucide-react"
+import { Bot, Cpu, Sparkles, ArrowLeftRight, BookOpenText } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { MODEL_OPTIONS } from "@/types/chat"
-import type { Conversation, ModelType } from "@/types/chat"
+import { MODEL_OPTIONS, AGENTS } from "@/types/chat"
+import type { Conversation, ModelType, AgentType } from "@/types/chat"
 
 interface ChatHeaderProps {
   connectionError: string | null
   conversations: Conversation[]
   currentConversationId: string | null
+  selectedAgent?: AgentType
+  onSelectAgent?: (agent: AgentType) => void
   selectedModel: ModelType
   onModelChange: (model: ModelType) => void
   onNewConversation: (title?: string) => void
@@ -76,6 +78,8 @@ export function ChatHeader({
   connectionError,
   conversations,
   currentConversationId,
+  selectedAgent,
+  onSelectAgent,
   selectedModel,
   onModelChange,
   onNewConversation,
@@ -95,19 +99,31 @@ export function ChatHeader({
         <MobileSidebarToggle
           conversations={conversations}
           currentConversationId={currentConversationId}
+          selectedAgent={selectedAgent}
+          onSelectAgent={onSelectAgent}
           onNewConversation={onNewConversation}
           onSwitchConversation={onSwitchConversation}
           onDeleteConversation={onDeleteConversation}
           onUpdateTitle={onUpdateTitle}
         />
 
+        {selectedAgent && onSelectAgent && (() => {
+          const other = AGENTS.find((a) => a.id !== selectedAgent)
+          if (!other) return null
+          const Icon = other.icon === "Bot" ? Bot : BookOpenText
+          return (
+            <button
+              onClick={() => onSelectAgent(other.id)}
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 h-7 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg border border-border/40 hover:border-border transition-all duration-200 shrink-0"
+            >
+              <Icon className="w-3 h-3" />
+              {other.name}
+            </button>
+          )
+        })()}
+
         {showLanguageBar && (
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <Languages className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-[11px] font-medium text-emerald-400">Interpreter</span>
-            </div>
-
             <div className="w-32">
               <Select value={sourceLang} onValueChange={(v) => onSourceChange?.(v)}>
                 <SelectTrigger className="h-8 text-xs bg-card/50 border-border/60 rounded-lg">
