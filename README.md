@@ -60,7 +60,7 @@ git clone https://github.com/Erick-MC-Cedeno/Chat-AI-Web
 2. Instala las dependencias del frontend:
 ```bash
 cd Chat-AI-Web
-npm install
+pnpm install
 ```
 
 3. Instala las dependencias del backend:
@@ -72,7 +72,7 @@ pip install -r requirements.txt
 4. Inicia el servidor de desarrollo:
 ```bash
 # En la carpeta principal
-npm run dev
+pnpm dev
 
 # En la carpeta backend
 python server.py
