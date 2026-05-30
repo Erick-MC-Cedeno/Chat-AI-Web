@@ -1,18 +1,21 @@
 # Chat-AI-Web 🤖
 
-Una aplicación web moderna de chat impulsada por inteligencia artificial, construida con tecnologías de última generación.
+An AI model wrapper application featuring two intelligent agents: **Chat Agent** for conversational AI interactions and **Interpreter Agent** for code analysis and execution. Built with modern, production-ready technologies.
 
-## Características 
+## Features
 
-- Interfaz de usuario moderna y responsiva
-- Chat en tiempo real con IA
-- Acciones rápidas y atajos
-- Soporte para múltiples conversaciones
-- Estado de conexión en tiempo real
-- Temas claro/oscuro
-- Diseño móvil adaptativo
+- **Chat Agent**: Conversational AI interactions with intelligent responses
+- **Interpreter Agent**: Code analysis, execution, and interpretation capabilities
+- AI Model Wrapper: Seamless integration with multiple AI models (Keras, TensorFlow)
+- Real-time conversation support with multi-turn interactions
+- Multiple conversation management and history
+- Real-time connection status monitoring
+- Modern, responsive, and intuitive user interface
+- Light/dark theme support
+- Adaptive mobile design
+- Quick actions and intelligent shortcuts
 
-## Tecnologías Utilizadas 🛠️
+## Technologies Used 🛠️
 
 
 ### Frontend
@@ -30,61 +33,60 @@ Una aplicación web moderna de chat impulsada por inteligencia artificial, const
 
 
 
-## Capturas de Pantalla 🖼️
+## Screenshots 🖼️
 
 ![Chat 1](/photos/chat1.png)
 ![Chat 2](/photos/chat2.png)
 ![Chat 3](/photos/chat3.png)
 ![Chat 4](/photos/chat4.png)
 
-## Estructura del Proyecto 📁
+## Project Structure 📁
 
 ```
 Chat-AI-Web/
-├── app/              # Rutas y configuración de Next.js
-├── components/       # Componentes React reutilizables
-├── backend/         # Servidor Python y modelos de IA
-├── lib/             # Utilidades y servicios
-├── hooks/           # Custom hooks de React
-├── public/          # Archivos estáticos
-└── types/           # Definiciones de tipos TypeScript
+├── app/              # Next.js routes and configuration
+├── components/       # Reusable React components
+├── backend/         # Python server and AI models
+├── lib/             # Utilities and services
+├── hooks/           # Custom React hooks
+├── public/          # Static assets
+└── types/           # TypeScript type definitions
 ```
 
-## Instalación 🚀
+## Installation 🚀
 
-1. Clona el repositorio:
+1. Clone the repository:
 ```bash
 git clone https://github.com/Erick-MC-Cedeno/Chat-AI-Web
 ```
 
-2. Instala las dependencias del frontend:
+2. Install frontend dependencies:
 ```bash
 cd Chat-AI-Web
 pnpm install
 ```
 
-3. Instala las dependencias del backend:
+3. Install backend dependencies:
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-4. Inicia el servidor de desarrollo:
+4. Start the development server:
 ```bash
-# En la carpeta principal
+# In the main folder
 pnpm dev
 
-# En la carpeta backend
+# In the backend folder
 python server.py
 ```
 
+5. Configure the necessary environment variables in the `.env` file
 
-2. Configura las variables de entorno necesarias en el archivo `.env`
+## License 📄
 
-## Licencia 📄
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.md) para más detalles.
+## Contributing 🤝
 
-## Contribución 🤝
-
-Las contribuciones son bienvenidas. Por favor, lee [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre nuestro código de conducta y el proceso para enviarnos pull requests.
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
